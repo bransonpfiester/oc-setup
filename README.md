@@ -63,6 +63,92 @@ Add additional channels post-setup. Currently available channels are coming in v
 - `imessage`
 - `whatsapp`
 
+## Telegram User ID & Allowed Senders
+
+OpenClaw uses your Telegram user ID to restrict who can talk to your bot. Without this, anyone who finds your bot could send it commands.
+
+### Finding your Telegram user ID
+
+Message [@userinfobot](https://t.me/userinfobot) on Telegram. It will immediately reply with your numeric user ID (e.g. `123456789`).
+
+### How it works
+
+During setup, your user ID is added to the `allowFrom` list in OpenClaw's config (`~/.openclaw/openclaw.json`):
+
+```json
+{
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "your-bot-token",
+      "dmPolicy": "allowlist",
+      "allowFrom": ["123456789"]
+    }
+  }
+}
+```
+
+Only user IDs in `allowFrom` can message your bot. Everyone else is ignored.
+
+### Adding more allowed senders
+
+To let another person (e.g. a team member) talk to your bot, add their user ID:
+
+```bash
+openclaw config set channels.telegram.allowFrom '["123456789", "987654321"]'
+```
+
+Or edit `~/.openclaw/openclaw.json` directly and restart the gateway.
+
+## Uninstalling
+
+### Quick uninstall (keeps your data)
+
+```bash
+npm uninstall -g openclaw
+npm uninstall -g oc-setup
+```
+
+### Full uninstall (removes everything)
+
+**1. Stop the gateway and remove the auto-start service:**
+
+macOS:
+```bash
+openclaw gateway stop
+launchctl unload ~/Library/LaunchAgents/com.openclaw.gateway.plist
+rm ~/Library/LaunchAgents/com.openclaw.gateway.plist
+```
+
+Linux:
+```bash
+openclaw gateway stop
+systemctl --user disable openclaw-gateway.service
+rm ~/.config/systemd/user/openclaw-gateway.service
+systemctl --user daemon-reload
+```
+
+**2. Remove OpenClaw and oc-setup:**
+
+```bash
+npm uninstall -g openclaw
+npm uninstall -g oc-setup
+```
+
+**3. Remove all data and config:**
+
+```bash
+rm -rf ~/.openclaw
+```
+
+This deletes your config, SOUL.md, USER.md, HEARTBEAT.md, logs, and all agent memory. Back up `~/.openclaw` first if you want to keep anything.
+
+### Unlink oc-setup (if installed via npm link for development)
+
+```bash
+npm unlink -g oc-setup
+```
+
 ## Platform Support
 
 | Platform      | Install Method | Service Manager | Status      |
