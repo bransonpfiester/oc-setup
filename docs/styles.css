@@ -761,6 +761,55 @@ code {
   border-color: var(--text-dim);
 }
 
+/* Shared fields */
+.shared-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Cloud deploy */
+.cloud-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.action-cloud {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, #dc2626 100%);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.action-cloud:hover {
+  opacity: 0.9;
+}
+
+.action-cloud:active {
+  transform: scale(0.98);
+}
+
+.action-cloud:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Local actions wrapper */
+.local-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
 /* Feedback + output */
 .form-security {
   text-align: center;

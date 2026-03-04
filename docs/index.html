@@ -82,14 +82,13 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             <input type="radio" name="hosting" value="local" checked onchange="updateHosting()">
             <span class="hosting-text">My computer</span>
           </label>
-          <label class="hosting-option hosting-disabled" id="host-cloud-label">
-            <input type="radio" name="hosting" value="cloud" disabled>
+          <label class="hosting-option" id="host-cloud-label">
+            <input type="radio" name="hosting" value="cloud" onchange="updateHosting()">
             <span class="hosting-text">Cloud server</span>
-            <span class="badge-soon">Coming soon</span>
           </label>
         </div>
 
-        <div id="local-form">
+        <div class="shared-fields">
           <div class="form-row">
             <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
             <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
@@ -126,7 +125,9 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
               </div>
             </div>
           </details>
+        </div>
 
+        <div id="local-actions" class="local-actions">
           <div class="action-buttons">
             <button type="button" class="action-btn action-primary" onclick="copyCommand()">
               <span class="action-icon">&#x2398;</span>
@@ -144,8 +145,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
 
           <p class="form-security">Your keys never leave your browser. Everything is encoded locally.</p>
 
-          <div id="action-feedback" class="action-feedback" hidden></div>
-
           <div id="curl-output" class="curl-output" hidden>
             <p class="generated-label">Run this in your terminal (installs Node.js if needed):</p>
             <div class="install-box install-box-generated">
@@ -157,6 +156,15 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             </div>
           </div>
         </div>
+
+        <div id="cloud-actions" class="cloud-actions" hidden>
+          <button type="button" class="action-btn action-cloud" onclick="deployToCloud()">
+            Deploy to cloud
+          </button>
+          <p class="form-security">Your keys are sent securely to our deployment server. Your agent runs 24/7 on Railway.</p>
+        </div>
+
+        <div id="action-feedback" class="action-feedback" hidden></div>
       </form>
     </section>
 
@@ -341,7 +349,16 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       });
     }
 
-    function updateHosting() {}
+    function updateHosting() {
+      const isCloud = document.querySelector('input[name="hosting"]:checked').value === 'cloud';
+      document.getElementById('local-actions').hidden = isCloud;
+      document.getElementById('cloud-actions').hidden = !isCloud;
+      document.getElementById('curl-output').hidden = true;
+      document.getElementById('action-feedback').hidden = true;
+
+      document.getElementById('host-local-label').classList.toggle('hosting-active', !isCloud);
+      document.getElementById('host-cloud-label').classList.toggle('hosting-active', isCloud);
+    }
 
     function detectProvider(apiKey) {
       if (apiKey.startsWith('sk-ant-')) return 'anthropic';
@@ -475,6 +492,45 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
         label.textContent = 'Copied!';
         setTimeout(() => { label.textContent = 'Copy'; }, 2000);
       });
+    }
+
+    async function deployToCloud() {
+      if (!validateRequired()) return;
+
+      const config = getFormData();
+      if (!config) return;
+
+      const btn = document.querySelector('.action-cloud');
+      const origText = btn.textContent;
+      btn.textContent = 'Deploying...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/deploy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramToken: config.token,
+            apiKey: config.apiKey,
+            provider: config.provider,
+            preset: config.preset,
+            name: config.name,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showFeedback(data.message);
+        } else {
+          showFeedback(data.error || 'Deployment failed. Please try again.');
+        }
+      } catch (err) {
+        showFeedback('Network error. Please check your connection and try again.');
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
     }
   </script>
 </body>

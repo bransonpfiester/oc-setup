@@ -73,6 +73,27 @@ Add additional channels post-setup. Currently available channels are coming in v
 | Debian 12     | apt + npm      | systemd (unit)  | Supported   |
 | Windows 10/11 | winget + npm   | Task Scheduler  | Best-effort |
 
+## Cloud Deployment
+
+The website includes a "Cloud server" option that deploys an OpenClaw agent to Railway via a Vercel serverless function.
+
+### Required Environment Variables (set in Vercel dashboard)
+
+| Variable | Description |
+| --- | --- |
+| `RAILWAY_API_TOKEN` | Railway account or team API token ([get one here](https://railway.com/account/tokens)) |
+| `RAILWAY_PROJECT_ID` | The Railway project ID where agent services are created |
+| `RAILWAY_ENVIRONMENT_ID` | The Railway environment ID (usually "production") |
+
+### Setup
+
+1. Create a Railway project for hosting client agents
+2. Get your project ID and environment ID from the Railway dashboard URL or API
+3. Generate an API token at [railway.com/account/tokens](https://railway.com/account/tokens)
+4. Add all three as environment variables in your [Vercel project settings](https://vercel.com/docs/environment-variables)
+
+The deploy endpoint lives at `api/deploy.js` and creates a new Railway service per client with the OpenClaw Docker image and their config as environment variables.
+
 ## Development
 
 ```bash

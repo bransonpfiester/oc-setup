@@ -2,5 +2,11 @@
   "outputDirectory": "docs",
   "buildCommand": "",
   "installCommand": "",
-  "framework": null
+  "framework": null,
+  "functions": {
+    "api/*.js": {
+      "memory": 256,
+      "maxDuration": 30
+    }
+  }
 }
