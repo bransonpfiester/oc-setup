@@ -77,17 +77,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       <p class="quick-setup-sub">Two fields. One command. Your agent is live.</p>
 
       <form class="setup-form" onsubmit="return false;" autocomplete="off">
-        <div class="hosting-toggle">
-          <label class="hosting-option hosting-active" id="host-local-label">
-            <input type="radio" name="hosting" value="local" checked onchange="updateHosting()">
-            <span class="hosting-text">My computer</span>
-          </label>
-          <label class="hosting-option" id="host-cloud-label">
-            <input type="radio" name="hosting" value="cloud" onchange="updateHosting()">
-            <span class="hosting-text">Cloud server</span>
-          </label>
-        </div>
-
         <div class="shared-fields">
           <div class="form-row">
             <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
@@ -155,13 +144,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
               </button>
             </div>
           </div>
-        </div>
-
-        <div id="cloud-actions" class="cloud-actions" hidden>
-          <button type="button" class="action-btn action-cloud" onclick="deployToCloud()">
-            Deploy to cloud
-          </button>
-          <p class="form-security">Your keys are sent securely to our deployment server. Your agent runs 24/7 on Railway.</p>
         </div>
 
         <div id="action-feedback" class="action-feedback" hidden></div>
@@ -349,17 +331,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       });
     }
 
-    function updateHosting() {
-      const isCloud = document.querySelector('input[name="hosting"]:checked').value === 'cloud';
-      document.getElementById('local-actions').hidden = isCloud;
-      document.getElementById('cloud-actions').hidden = !isCloud;
-      document.getElementById('curl-output').hidden = true;
-      document.getElementById('action-feedback').hidden = true;
-
-      document.getElementById('host-local-label').classList.toggle('hosting-active', !isCloud);
-      document.getElementById('host-cloud-label').classList.toggle('hosting-active', isCloud);
-    }
-
     function detectProvider(apiKey) {
       if (apiKey.startsWith('sk-ant-')) return 'anthropic';
       if (apiKey.startsWith('sk-')) return 'openai';
@@ -494,44 +465,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       });
     }
 
-    async function deployToCloud() {
-      if (!validateRequired()) return;
-
-      const config = getFormData();
-      if (!config) return;
-
-      const btn = document.querySelector('.action-cloud');
-      const origText = btn.textContent;
-      btn.textContent = 'Deploying...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/deploy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramToken: config.token,
-            apiKey: config.apiKey,
-            provider: config.provider,
-            preset: config.preset,
-            name: config.name,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showFeedback(data.message);
-        } else {
-          showFeedback(data.error || 'Deployment failed. Please try again.');
-        }
-      } catch (err) {
-        showFeedback('Network error. Please check your connection and try again.');
-      } finally {
-        btn.textContent = origText;
-        btn.disabled = false;
-      }
-    }
   </script>
 </body>
 </html>
