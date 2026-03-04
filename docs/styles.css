@@ -635,6 +635,47 @@ code {
   color: var(--accent-dim);
 }
 
+/* Skills grid */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.skill-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: border-color 0.2s;
+}
+
+.skill-checkbox:hover {
+  border-color: var(--text-dim);
+}
+
+.skill-checkbox:has(input:checked) {
+  border-color: var(--accent-dim);
+  background: var(--accent-glow);
+}
+
+.skill-checkbox input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.skill-checkbox span {
+  color: var(--text);
+  font-weight: 500;
+}
+
 .form-row input,
 .form-row select {
   background: var(--bg-card);
@@ -889,6 +930,10 @@ code {
 
   .testimonial-grid {
     grid-template-columns: 1fr;
+  }
+
+  .skills-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .action-buttons {
