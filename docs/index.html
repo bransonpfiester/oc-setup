@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oc-setup — OpenClaw Client Setup CLI</title>
+  <meta name="description" content="One command to go from zero to a working AI agent on Telegram. Replaces the manual setup with a guided, automated experience.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">oc-setup</a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#commands">Commands</a>
+        <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <pre class="ascii-banner" aria-hidden="true">
+ ██████╗  ██████╗    ███████╗███████╗████████╗██╗   ██╗██████╗
+██╔═══██╗██╔════╝    ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
+██║   ██║██║         ███████╗█████╗     ██║   ██║   ██║██████╔╝
+██║   ██║██║         ╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝
+╚██████╔╝╚██████╗    ███████║███████╗   ██║   ╚██████╔╝██║
+ ╚═════╝  ╚═════╝    ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝</pre>
+      <h1>Zero to AI agent in one command.</h1>
+      <p class="hero-sub">
+        <strong>oc-setup</strong> automates OpenClaw client onboarding.
+        Run one command, answer a few questions, and have a fully configured
+        AI agent running on Telegram in minutes.
+      </p>
+      <div class="install-box">
+        <code id="install-cmd">npx oc-setup</code>
+        <button class="copy-btn" onclick="copyInstall()" aria-label="Copy install command">
+          <span class="copy-icon">&#x2398;</span>
+          <span class="copy-label">Copy</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="terminal-demo">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="terminal-title">Terminal</span>
+        </div>
+        <div class="terminal-body">
+<span class="t-prompt">$</span> <span class="t-cmd">npx oc-setup</span>
+
+<span class="t-success">&#10003;</span> Detected: macOS (arm64)
+<span class="t-success">&#10003;</span> Node.js v22.1.0 found
+<span class="t-success">&#10003;</span> OpenClaw v2026.3.2 installed
+
+<span class="t-prompt">?</span> What's your name? <span class="t-input">Casey</span>
+<span class="t-prompt">?</span> Which AI provider? <span class="t-input">Anthropic (Claude)</span>
+<span class="t-prompt">?</span> Paste your Telegram bot token: <span class="t-dim">7891234567:AAH...</span>
+
+<span class="t-success">&#10003;</span> Bot @caseys_ai_bot connected!
+<span class="t-success">&#10003;</span> SOUL.md, USER.md generated
+<span class="t-success">&#10003;</span> Gateway running on port 18789
+
+<span class="t-bold">Your AI agent is LIVE!</span>
+Send a message to <span class="t-highlight">@caseys_ai_bot</span> on Telegram.
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2>What it does</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#9881;</div>
+          <h3>Auto-detects everything</h3>
+          <p>OS, architecture, Node.js version, existing OpenClaw install. Installs what's missing, skips what's already there.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#9889;</div>
+          <h3>Validates before saving</h3>
+          <p>Telegram bot tokens and AI API keys are checked against live APIs before they touch your config. No broken setups.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128196;</div>
+          <h3>Generates your agent files</h3>
+          <p>SOUL.md, USER.md, and HEARTBEAT.md are built from your answers. Your agent knows who you are from minute one.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128268;</div>
+          <h3>Starts on boot</h3>
+          <p>Configures launchd (macOS) or systemd (Linux) so your agent is always running. No manual restart needed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#129658;</div>
+          <h3>Built-in diagnostics</h3>
+          <p><code>oc-setup doctor</code> checks everything and tells you exactly what's wrong and how to fix it.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128260;</div>
+          <h3>Idempotent &amp; safe</h3>
+          <p>Run it again if something fails. Every step checks current state first. Reset backs up before wiping.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="commands" class="commands">
+      <h2>Commands</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code>npx oc-setup</code>
+          <p>Full guided setup. Detects OS, installs OpenClaw, configures Telegram, sets up your AI model, generates personality files, starts the gateway, and verifies everything works.</p>
+        </div>
+        <div class="cmd-item">
+          <code>oc-setup doctor</code>
+          <p>Diagnoses common issues: Node version, port conflicts, expired tokens, gateway crashes. Outputs a health report with one-liner fix commands.</p>
+        </div>
+        <div class="cmd-item">
+          <code>oc-setup update</code>
+          <p>Updates OpenClaw to latest, preserves your config, restarts the gateway automatically.</p>
+        </div>
+        <div class="cmd-item">
+          <code>oc-setup reset</code>
+          <p>Nuclear option. Backs up current config to a timestamped folder, wipes everything, and re-runs setup from scratch.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="platforms">
+      <h2>Platform support</h2>
+      <div class="platform-table-wrap">
+        <table class="platform-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Install</th>
+              <th>Service</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>macOS (arm64)</td>
+              <td>Homebrew + npm</td>
+              <td>launchd</td>
+              <td><span class="badge primary">Primary</span></td>
+            </tr>
+            <tr>
+              <td>macOS (x64)</td>
+              <td>Homebrew + npm</td>
+              <td>launchd</td>
+              <td><span class="badge supported">Supported</span></td>
+            </tr>
+            <tr>
+              <td>Ubuntu 22/24</td>
+              <td>apt + npm</td>
+              <td>systemd</td>
+              <td><span class="badge supported">Supported</span></td>
+            </tr>
+            <tr>
+              <td>Debian 12</td>
+              <td>apt + npm</td>
+              <td>systemd</td>
+              <td><span class="badge supported">Supported</span></td>
+            </tr>
+            <tr>
+              <td>Windows 10/11</td>
+              <td>winget + npm</td>
+              <td>Task Scheduler</td>
+              <td><span class="badge best-effort">Best-effort</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Get started now</h2>
+      <div class="install-box install-box-lg">
+        <code id="install-cmd-2">npx oc-setup</code>
+        <button class="copy-btn" onclick="copyInstall()" aria-label="Copy install command">
+          <span class="copy-icon">&#x2398;</span>
+          <span class="copy-label">Copy</span>
+        </button>
+      </div>
+      <p class="cta-sub">
+        Need a custom setup with advanced integrations?
+        <a href="https://openclaw.ai" target="_blank" rel="noopener">Book a setup call</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>oc-setup &middot; built by <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a></span>
+      <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    function copyInstall() {
+      navigator.clipboard.writeText('npx oc-setup').then(() => {
+        const btns = document.querySelectorAll('.copy-btn');
+        btns.forEach(btn => {
+          const label = btn.querySelector('.copy-label');
+          label.textContent = 'Copied!';
+          setTimeout(() => { label.textContent = 'Copy'; }, 2000);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
