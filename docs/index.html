@@ -73,10 +73,15 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
 
     <section id="quick-setup" class="quick-setup">
       <h2>Quick Setup</h2>
-      <p class="quick-setup-sub">Two fields. One command. Your agent is live.</p>
+      <p class="quick-setup-sub">Three fields. One command. Your agent is live.</p>
 
       <form class="setup-form" onsubmit="return false;" autocomplete="off">
         <div class="shared-fields">
+          <div class="form-row">
+            <label for="qs-userid">Telegram user ID <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="form-help">Find yours via @userinfobot</a></label>
+            <input type="text" id="qs-userid" placeholder="123456789" required>
+            <span class="field-hint">Message <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> on Telegram and it will reply with your ID.</span>
+          </div>
           <div class="form-row">
             <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
             <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
@@ -293,14 +298,15 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     }
 
     function getFormData() {
+      const userId = document.getElementById('qs-userid').value.trim();
       const token = document.getElementById('qs-token').value.trim();
       const apiKey = document.getElementById('qs-apikey').value.trim();
-      if (!token || !apiKey) return null;
+      if (!userId || !token || !apiKey) return null;
       const providerSel = document.getElementById('qs-provider').value;
       const provider = providerSel === 'auto' ? detectProvider(apiKey) : providerSel;
       const name = document.getElementById('qs-name').value.trim() || undefined;
       const preset = document.getElementById('qs-preset').value;
-      const config = { token, provider, apiKey, preset };
+      const config = { userId, token, provider, apiKey, preset };
       if (name) config.name = name;
       return config;
     }
@@ -319,10 +325,11 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     }
 
     function validateRequired() {
+      const userId = document.getElementById('qs-userid').value.trim();
       const token = document.getElementById('qs-token').value.trim();
       const apiKey = document.getElementById('qs-apikey').value.trim();
-      if (!token || !apiKey) {
-        showFeedback('Please fill in both the Telegram token and API key.');
+      if (!userId || !token || !apiKey) {
+        showFeedback('Please fill in your Telegram user ID, bot token, and API key.');
         return false;
       }
       return true;
