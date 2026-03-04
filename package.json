@@ -1,0 +1,36 @@
+{
+  "name": "oc-setup",
+  "version": "1.0.0",
+  "description": "OpenClaw client setup CLI — zero to working AI agent in minutes",
+  "type": "module",
+  "bin": {
+    "oc-setup": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "openclaw",
+    "cli",
+    "ai",
+    "agent",
+    "setup",
+    "telegram"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0"
+  }
+}
