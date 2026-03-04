@@ -79,50 +79,90 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
 
     <section id="quick-setup" class="quick-setup">
       <h2>Quick Setup</h2>
-      <p class="quick-setup-sub">Fill this out and get a single command. Paste it into your terminal and you're done.</p>
+      <p class="quick-setup-sub">Two fields. One command. Your agent is live.</p>
+
       <form class="setup-form" onsubmit="return false;" autocomplete="off">
-        <div class="form-row">
-          <label for="qs-name">Your name</label>
-          <input type="text" id="qs-name" placeholder="John" required>
+        <div class="hosting-toggle">
+          <label class="hosting-option hosting-active" id="host-local-label">
+            <input type="radio" name="hosting" value="local" checked onchange="updateHosting()">
+            <span class="hosting-text">My computer</span>
+          </label>
+          <label class="hosting-option hosting-disabled" id="host-cloud-label">
+            <input type="radio" name="hosting" value="cloud" disabled>
+            <span class="hosting-text">Cloud server</span>
+            <span class="badge-soon">Coming soon</span>
+          </label>
         </div>
-        <div class="form-row">
-          <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
-          <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
+
+        <div id="local-form">
+          <div class="form-row">
+            <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
+            <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
+          </div>
+          <div class="form-row">
+            <label for="qs-apikey">API key <span class="form-help">(Anthropic, OpenAI, or OpenRouter)</span></label>
+            <input type="password" id="qs-apikey" placeholder="sk-ant-..." required>
+          </div>
+
+          <details class="advanced-toggle">
+            <summary>Advanced options</summary>
+            <div class="advanced-body">
+              <div class="form-row">
+                <label for="qs-name">Your name <span class="form-help">(optional)</span></label>
+                <input type="text" id="qs-name" placeholder="John">
+              </div>
+              <div class="form-row">
+                <label for="qs-provider">AI provider <span class="form-help">(auto-detected from key)</span></label>
+                <select id="qs-provider">
+                  <option value="auto">Auto-detect</option>
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="openai">OpenAI (GPT-4o)</option>
+                  <option value="openrouter">OpenRouter</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label for="qs-preset">Agent personality</label>
+                <select id="qs-preset">
+                  <option value="business">Business — direct, efficient</option>
+                  <option value="creative">Creative — imaginative, artistic</option>
+                  <option value="developer">Developer — technical, precise</option>
+                  <option value="general">General — friendly all-rounder</option>
+                </select>
+              </div>
+            </div>
+          </details>
+
+          <div class="action-buttons">
+            <button type="button" class="action-btn action-primary" onclick="copyCommand()">
+              <span class="action-icon">&#x2398;</span>
+              Copy command
+            </button>
+            <button type="button" class="action-btn action-secondary" onclick="downloadInstaller()">
+              <span class="action-icon">&#x21E9;</span>
+              Download installer
+            </button>
+            <button type="button" class="action-btn action-tertiary" onclick="showCurl()">
+              <span class="action-icon">&gt;_</span>
+              Show curl command
+            </button>
+          </div>
+
+          <p class="form-security">Your keys never leave your browser. Everything is encoded locally.</p>
+
+          <div id="action-feedback" class="action-feedback" hidden></div>
+
+          <div id="curl-output" class="curl-output" hidden>
+            <p class="generated-label">Run this in your terminal (installs Node.js if needed):</p>
+            <div class="install-box install-box-generated">
+              <code id="curl-cmd"></code>
+              <button class="copy-btn" onclick="copyCurl()" aria-label="Copy curl command">
+                <span class="copy-icon">&#x2398;</span>
+                <span class="copy-label">Copy</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="form-row">
-          <label for="qs-provider">AI provider</label>
-          <select id="qs-provider">
-            <option value="anthropic">Anthropic (Claude) — recommended</option>
-            <option value="openai">OpenAI (GPT-4o)</option>
-            <option value="openrouter">OpenRouter (multiple models)</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label for="qs-apikey">API key</label>
-          <input type="password" id="qs-apikey" placeholder="sk-ant-..." required>
-        </div>
-        <div class="form-row">
-          <label for="qs-preset">Agent personality</label>
-          <select id="qs-preset">
-            <option value="business">Business — direct, efficient, runs the business</option>
-            <option value="creative">Creative — imaginative, helps with creative projects</option>
-            <option value="developer">Developer — technical, precise, code-focused</option>
-            <option value="general">General — friendly all-rounder</option>
-          </select>
-        </div>
-        <button type="button" class="generate-btn" onclick="generateConfig()">Generate my setup command</button>
-        <p class="form-security">Your keys never leave your browser. The config is encoded locally.</p>
       </form>
-      <div id="generated-output" class="generated-output" hidden>
-        <p class="generated-label">Copy and paste this into your terminal:</p>
-        <div class="install-box install-box-generated">
-          <code id="generated-cmd"></code>
-          <button class="copy-btn" onclick="copyGenerated()" aria-label="Copy generated command">
-            <span class="copy-icon">&#x2398;</span>
-            <span class="copy-label">Copy</span>
-          </button>
-        </div>
-      </div>
     </section>
 
     <section id="features" class="features">
@@ -264,31 +304,142 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       });
     }
 
-    function generateConfig() {
-      const name = document.getElementById('qs-name').value.trim();
-      const token = document.getElementById('qs-token').value.trim();
-      const provider = document.getElementById('qs-provider').value;
-      const apiKey = document.getElementById('qs-apikey').value.trim();
-      const preset = document.getElementById('qs-preset').value;
+    function updateHosting() {}
 
-      if (!name || !token || !apiKey) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      const config = { name, token, provider, apiKey, preset };
-      const payload = btoa(JSON.stringify(config));
-      const cmd = `npx oc-setup --config ${payload}`;
-
-      document.getElementById('generated-cmd').textContent = cmd;
-      document.getElementById('generated-output').hidden = false;
-      document.getElementById('generated-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    function detectProvider(apiKey) {
+      if (apiKey.startsWith('sk-ant-')) return 'anthropic';
+      if (apiKey.startsWith('sk-')) return 'openai';
+      return 'openrouter';
     }
 
-    function copyGenerated() {
-      const cmd = document.getElementById('generated-cmd').textContent;
+    function getFormData() {
+      const token = document.getElementById('qs-token').value.trim();
+      const apiKey = document.getElementById('qs-apikey').value.trim();
+
+      if (!token || !apiKey) return null;
+
+      const providerSel = document.getElementById('qs-provider').value;
+      const provider = providerSel === 'auto' ? detectProvider(apiKey) : providerSel;
+      const name = document.getElementById('qs-name').value.trim() || undefined;
+      const preset = document.getElementById('qs-preset').value;
+
+      const config = { token, provider, apiKey, preset };
+      if (name) config.name = name;
+      return config;
+    }
+
+    function getPayload() {
+      const config = getFormData();
+      if (!config) return null;
+      return btoa(JSON.stringify(config));
+    }
+
+    function showFeedback(msg) {
+      const el = document.getElementById('action-feedback');
+      el.textContent = msg;
+      el.hidden = false;
+      setTimeout(() => { el.hidden = true; }, 3000);
+    }
+
+    function validateRequired() {
+      const token = document.getElementById('qs-token').value.trim();
+      const apiKey = document.getElementById('qs-apikey').value.trim();
+      if (!token || !apiKey) {
+        showFeedback('Please fill in both the Telegram token and API key.');
+        return false;
+      }
+      return true;
+    }
+
+    function copyCommand() {
+      if (!validateRequired()) return;
+      const payload = getPayload();
+      const cmd = 'npx oc-setup --config ' + payload;
       navigator.clipboard.writeText(cmd).then(() => {
-        const label = document.querySelector('#generated-output .copy-label');
+        showFeedback('Copied to clipboard! Paste it into your terminal.');
+      });
+    }
+
+    function downloadInstaller() {
+      if (!validateRequired()) return;
+      const payload = getPayload();
+      const script = [
+        '#!/bin/bash',
+        'set -e',
+        '',
+        '# OpenClaw Setup Installer',
+        '# Generated at oc-setup.vercel.app',
+        '',
+        'CONFIG="' + payload + '"',
+        '',
+        'echo ""',
+        'echo "  OpenClaw Setup Installer"',
+        'echo "  ========================"',
+        'echo ""',
+        '',
+        'if command -v node &>/dev/null; then',
+        '  NODE_MAJOR=$(node -v | sed "s/v//" | cut -d. -f1)',
+        '  if [ "$NODE_MAJOR" -ge 18 ] 2>/dev/null; then',
+        '    echo "  Node.js $(node -v) found."',
+        '  else',
+        '    echo "  Node.js too old. Installing..."',
+        '    if [[ "$(uname)" == "Darwin" ]]; then',
+        '      brew install node || { echo "Install Node.js 18+ manually"; exit 1; }',
+        '    else',
+        '      curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -',
+        '      sudo apt-get install -y nodejs',
+        '    fi',
+        '  fi',
+        'else',
+        '  echo "  Node.js not found. Installing..."',
+        '  if [[ "$(uname)" == "Darwin" ]]; then',
+        '    if command -v brew &>/dev/null; then',
+        '      brew install node',
+        '    else',
+        '      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+        '      eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"',
+        '      brew install node',
+        '    fi',
+        '  else',
+        '    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -',
+        '    sudo apt-get install -y nodejs',
+        '  fi',
+        'fi',
+        '',
+        'echo ""',
+        'echo "  Running oc-setup..."',
+        'echo ""',
+        '',
+        'npx oc-setup --config "$CONFIG"',
+      ].join('\n');
+
+      const blob = new Blob([script], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'oc-install.command';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showFeedback('Downloaded! Double-click oc-install.command to run it.');
+    }
+
+    function showCurl() {
+      if (!validateRequired()) return;
+      const payload = getPayload();
+      const cmd = 'curl -fsSL https://oc-setup.vercel.app/install.sh | bash -s -- ' + payload;
+
+      document.getElementById('curl-cmd').textContent = cmd;
+      document.getElementById('curl-output').hidden = false;
+      document.getElementById('curl-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function copyCurl() {
+      const cmd = document.getElementById('curl-cmd').textContent;
+      navigator.clipboard.writeText(cmd).then(() => {
+        const label = document.querySelector('#curl-output .copy-label');
         label.textContent = 'Copied!';
         setTimeout(() => { label.textContent = 'Copy'; }, 2000);
       });

@@ -461,6 +461,63 @@ code {
   gap: 18px;
 }
 
+/* Hosting toggle */
+.hosting-toggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.hosting-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  position: relative;
+}
+
+.hosting-option input[type="radio"] {
+  display: none;
+}
+
+.hosting-text {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.hosting-active {
+  border-color: var(--accent-dim);
+  background: rgba(110, 231, 183, 0.06);
+}
+
+.hosting-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.badge-soon {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(253, 230, 138, 0.12);
+  color: var(--yellow);
+}
+
+/* Form fields */
+#local-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .form-row {
   display: flex;
   flex-direction: column;
@@ -474,6 +531,7 @@ code {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .form-help {
@@ -519,38 +577,127 @@ code {
   color: var(--text);
 }
 
-.generate-btn {
+/* Advanced toggle */
+.advanced-toggle {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.advanced-toggle summary {
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s;
+  list-style: none;
+}
+
+.advanced-toggle summary::before {
+  content: "\25B6  ";
+  font-size: 0.65rem;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.advanced-toggle[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.advanced-toggle summary:hover {
+  color: var(--text);
+}
+
+.advanced-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 16px;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
   margin-top: 8px;
-  padding: 14px 24px;
-  background: var(--accent);
-  color: var(--bg);
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px;
   border: none;
   border-radius: var(--radius-sm);
   font-family: var(--sans);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
 }
 
-.generate-btn:hover {
+.action-btn:active {
+  transform: scale(0.97);
+}
+
+.action-icon {
+  font-size: 1.05rem;
+}
+
+.action-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.action-primary:hover {
   background: var(--accent-dim);
 }
 
-.generate-btn:active {
-  transform: scale(0.98);
+.action-secondary {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
+.action-secondary:hover {
+  border-color: var(--accent-dim);
+}
+
+.action-tertiary {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.action-tertiary:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* Feedback + output */
 .form-security {
   text-align: center;
   font-size: 0.78rem;
   color: var(--text-dim);
   opacity: 0.7;
-  margin-top: 4px;
 }
 
-.generated-output {
-  margin-top: 28px;
+.action-feedback {
+  text-align: center;
+  padding: 12px 16px;
+  background: rgba(110, 231, 183, 0.1);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.curl-output {
+  margin-top: 12px;
 }
 
 .generated-label {
@@ -566,7 +713,7 @@ code {
 }
 
 .install-box-generated code {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   word-break: break-all;
   white-space: normal;
   line-height: 1.5;
@@ -594,6 +741,14 @@ code {
 
   .feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .hosting-toggle {
+    flex-direction: column;
   }
 
   .footer-inner {
