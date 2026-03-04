@@ -16,6 +16,7 @@
     <div class="nav-inner">
       <a href="/" class="nav-brand">oc-setup</a>
       <div class="nav-links">
+        <a href="#quick-setup">Quick Setup</a>
         <a href="#features">Features</a>
         <a href="#commands">Commands</a>
         <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
@@ -72,6 +73,54 @@
 
 <span class="t-bold">Your AI agent is LIVE!</span>
 Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
+        </div>
+      </div>
+    </section>
+
+    <section id="quick-setup" class="quick-setup">
+      <h2>Quick Setup</h2>
+      <p class="quick-setup-sub">Fill this out and get a single command. Paste it into your terminal and you're done.</p>
+      <form class="setup-form" onsubmit="return false;" autocomplete="off">
+        <div class="form-row">
+          <label for="qs-name">Your name</label>
+          <input type="text" id="qs-name" placeholder="John" required>
+        </div>
+        <div class="form-row">
+          <label for="qs-token">Telegram bot token <a href="https://t.me/BotFather" target="_blank" rel="noopener" class="form-help">Get one from @BotFather</a></label>
+          <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
+        </div>
+        <div class="form-row">
+          <label for="qs-provider">AI provider</label>
+          <select id="qs-provider">
+            <option value="anthropic">Anthropic (Claude) — recommended</option>
+            <option value="openai">OpenAI (GPT-4o)</option>
+            <option value="openrouter">OpenRouter (multiple models)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="qs-apikey">API key</label>
+          <input type="password" id="qs-apikey" placeholder="sk-ant-..." required>
+        </div>
+        <div class="form-row">
+          <label for="qs-preset">Agent personality</label>
+          <select id="qs-preset">
+            <option value="business">Business — direct, efficient, runs the business</option>
+            <option value="creative">Creative — imaginative, helps with creative projects</option>
+            <option value="developer">Developer — technical, precise, code-focused</option>
+            <option value="general">General — friendly all-rounder</option>
+          </select>
+        </div>
+        <button type="button" class="generate-btn" onclick="generateConfig()">Generate my setup command</button>
+        <p class="form-security">Your keys never leave your browser. The config is encoded locally.</p>
+      </form>
+      <div id="generated-output" class="generated-output" hidden>
+        <p class="generated-label">Copy and paste this into your terminal:</p>
+        <div class="install-box install-box-generated">
+          <code id="generated-cmd"></code>
+          <button class="copy-btn" onclick="copyGenerated()" aria-label="Copy generated command">
+            <span class="copy-icon">&#x2398;</span>
+            <span class="copy-label">Copy</span>
+          </button>
         </div>
       </div>
     </section>
@@ -208,12 +257,40 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
   <script>
     function copyInstall() {
       navigator.clipboard.writeText('npx oc-setup').then(() => {
-        const btns = document.querySelectorAll('.copy-btn');
-        btns.forEach(btn => {
-          const label = btn.querySelector('.copy-label');
+        document.querySelectorAll('.hero .copy-btn .copy-label, .cta .copy-btn .copy-label').forEach(label => {
           label.textContent = 'Copied!';
           setTimeout(() => { label.textContent = 'Copy'; }, 2000);
         });
+      });
+    }
+
+    function generateConfig() {
+      const name = document.getElementById('qs-name').value.trim();
+      const token = document.getElementById('qs-token').value.trim();
+      const provider = document.getElementById('qs-provider').value;
+      const apiKey = document.getElementById('qs-apikey').value.trim();
+      const preset = document.getElementById('qs-preset').value;
+
+      if (!name || !token || !apiKey) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      const config = { name, token, provider, apiKey, preset };
+      const payload = btoa(JSON.stringify(config));
+      const cmd = `npx oc-setup --config ${payload}`;
+
+      document.getElementById('generated-cmd').textContent = cmd;
+      document.getElementById('generated-output').hidden = false;
+      document.getElementById('generated-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function copyGenerated() {
+      const cmd = document.getElementById('generated-cmd').textContent;
+      navigator.clipboard.writeText(cmd).then(() => {
+        const label = document.querySelector('#generated-output .copy-label');
+        label.textContent = 'Copied!';
+        setTimeout(() => { label.textContent = 'Copy'; }, 2000);
       });
     }
   </script>

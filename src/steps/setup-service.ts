@@ -52,16 +52,6 @@ export async function setupService(ctx: SetupContext): Promise<void> {
   const platform = detectPlatform();
   const p_ = paths();
 
-  const shouldInstall = await p.confirm({
-    message: "Set up auto-start so your agent runs on boot?",
-    initialValue: true,
-  });
-
-  if (p.isCancel(shouldInstall) || !shouldInstall) {
-    p.log.info("Skipping auto-start. You can set it up later.");
-    return;
-  }
-
   const s = p.spinner();
   s.start("Configuring auto-start...");
 

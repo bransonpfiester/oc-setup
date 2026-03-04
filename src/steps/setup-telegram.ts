@@ -4,7 +4,30 @@ import { readConfig, writeConfig } from "../lib/config.js";
 import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
 
+const MAX_RETRIES = 3;
+
+function hyperlink(text: string, url: string): string {
+  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
+}
+
 export async function setupTelegram(ctx: SetupContext): Promise<void> {
+  if (ctx.telegram) {
+    const s = p.spinner();
+    s.start("Validating pre-configured Telegram token...");
+    const botInfo = await validateToken(ctx.telegram.token);
+    if (botInfo) {
+      ctx.telegram.botUsername = botInfo.username;
+      s.stop(`Bot @${botInfo.username} connected!`);
+      writeConfig({
+        telegram: { token: ctx.telegram.token, botUsername: botInfo.username },
+      });
+      return;
+    }
+    s.stop("Pre-configured token is invalid");
+    p.log.warn("The provided Telegram token didn't validate. Let's enter a new one.");
+    ctx.telegram = null;
+  }
+
   const existing = readConfig();
   if (existing.telegram?.token && existing.telegram?.botUsername) {
     const reuse = await p.confirm({
@@ -25,10 +48,12 @@ export async function setupTelegram(ctx: SetupContext): Promise<void> {
     }
   }
 
+  const botFatherLink = hyperlink("Open @BotFather in Telegram", "https://t.me/BotFather");
+
   p.note(
     [
       "To connect your agent to Telegram:",
-      "1. Open Telegram and message @BotFather",
+      `1. ${botFatherLink}`,
       "2. Send /newbot",
       "3. Choose a name and username for your bot",
       "4. Copy the API token",
@@ -36,40 +61,49 @@ export async function setupTelegram(ctx: SetupContext): Promise<void> {
     "Telegram Setup",
   );
 
-  const token = await p.text({
-    message: "Paste your Telegram bot token:",
-    placeholder: "7891234567:AAH...",
-    validate(value) {
-      if (!value.trim()) return "Token is required";
-      if (!isValidTokenFormat(value.trim()))
-        return "Invalid token format. Should look like: 1234567890:AABBccDDee...";
-    },
-  });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const token = await p.text({
+      message: attempt > 1
+        ? `Paste your Telegram bot token (attempt ${attempt}/${MAX_RETRIES}):`
+        : "Paste your Telegram bot token:",
+      placeholder: "7891234567:AAH...",
+      validate(value) {
+        if (!value.trim()) return "Token is required";
+        if (!isValidTokenFormat(value.trim()))
+          return "Invalid token format. Should look like: 1234567890:AABBccDDee...";
+      },
+    });
 
-  if (p.isCancel(token)) {
-    p.cancel("Setup cancelled.");
-    process.exit(0);
-  }
+    if (p.isCancel(token)) {
+      p.cancel("Setup cancelled.");
+      process.exit(0);
+    }
 
-  const s = p.spinner();
-  s.start("Validating token with Telegram...");
+    const s = p.spinner();
+    s.start("Validating token with Telegram...");
 
-  const botInfo = await validateToken(token);
+    const botInfo = await validateToken(token);
 
-  if (!botInfo) {
+    if (botInfo) {
+      s.stop(`Bot @${botInfo.username} connected!`);
+      logger.info(`Telegram bot validated: @${botInfo.username}`);
+      ctx.telegram = { token: token.trim(), botUsername: botInfo.username };
+      writeConfig({
+        telegram: { token: token.trim(), botUsername: botInfo.username },
+      });
+      return;
+    }
+
     s.stop("Validation failed");
-    p.log.error(
-      "Could not validate the token. Check that it's correct and try again.",
-    );
-    logger.error("Telegram token validation failed");
-    process.exit(1);
+
+    if (attempt < MAX_RETRIES) {
+      p.log.warn("Could not validate the token. Check that it's correct and try again.");
+    } else {
+      p.log.error(
+        `Failed after ${MAX_RETRIES} attempts. Run oc-setup again when you have a valid token.`,
+      );
+      logger.error("Telegram token validation failed after max retries");
+      process.exit(1);
+    }
   }
-
-  s.stop(`Bot @${botInfo.username} connected!`);
-  logger.info(`Telegram bot validated: @${botInfo.username}`);
-
-  ctx.telegram = { token: token.trim(), botUsername: botInfo.username };
-  writeConfig({
-    telegram: { token: token.trim(), botUsername: botInfo.username },
-  });
 }

@@ -27,9 +27,10 @@ program
 program
   .command("init", { isDefault: true })
   .description("Full guided setup flow (default)")
-  .action(async () => {
+  .option("--config <payload>", "Base64-encoded config to skip prompts")
+  .action(async (opts: { config?: string }) => {
     const { initCommand } = await import("./commands/init.js");
-    await initCommand();
+    await initCommand(opts.config);
   });
 
 program

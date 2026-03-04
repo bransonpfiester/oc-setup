@@ -1,9 +1,12 @@
 import * as p from "@clack/prompts";
 import { writeFileSync, mkdirSync } from "node:fs";
 import {
+  PRESETS,
+  getPreset,
   generateSoulMd,
   generateUserMd,
   generateHeartbeatMd,
+  type PresetKey,
 } from "../lib/templates.js";
 import { paths } from "../lib/platform.js";
 import { writeConfig } from "../lib/config.js";
@@ -20,9 +23,14 @@ const FOCUS_OPTIONS = [
 ];
 
 export async function setupPersonality(ctx: SetupContext): Promise<void> {
+  if (ctx.personality.description && ctx.personality.focusAreas.length > 0) {
+    p.log.success("Personality pre-configured");
+    return writeFiles(ctx);
+  }
+
   const name = await p.text({
     message: "What's your name?",
-    placeholder: "Casey",
+    placeholder: "John",
     validate(value) {
       if (!value.trim()) return "Name is required";
     },
@@ -32,46 +40,34 @@ export async function setupPersonality(ctx: SetupContext): Promise<void> {
     process.exit(0);
   }
   ctx.userName = name.trim();
-
-  const agentName = await p.text({
-    message: "What should your agent call you?",
-    placeholder: ctx.userName,
-    initialValue: ctx.userName,
-  });
-  if (p.isCancel(agentName)) {
-    p.cancel("Setup cancelled.");
-    process.exit(0);
-  }
-  ctx.agentName = (agentName as string).trim() || ctx.userName;
+  ctx.agentName = ctx.userName;
 
   const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const tz = await p.text({
-    message: "What's your timezone?",
-    placeholder: detectedTz,
-    initialValue: detectedTz,
-  });
-  if (p.isCancel(tz)) {
-    p.cancel("Setup cancelled.");
-    process.exit(0);
-  }
-  ctx.timezone = (tz as string).trim() || detectedTz;
+  ctx.timezone = detectedTz;
+  p.log.info(`Timezone: ${detectedTz}`);
 
-  const description = await p.text({
-    message: "Describe your agent's personality in a sentence:",
-    placeholder: "Direct, practical, helps me run my business",
-    validate(value) {
-      if (!value.trim()) return "Please provide a brief personality description";
-    },
+  const presetChoice = await p.select({
+    message: "Pick a personality for your agent:",
+    options: PRESETS.map((pr) => ({
+      value: pr.key,
+      label: pr.label,
+      hint: pr.description,
+    })),
   });
-  if (p.isCancel(description)) {
+  if (p.isCancel(presetChoice)) {
     p.cancel("Setup cancelled.");
     process.exit(0);
   }
-  ctx.personality.description = description.trim();
+
+  const preset = getPreset(presetChoice as string)!;
+  ctx.personality.description = preset.description;
 
   const focusAreas = await p.multiselect({
-    message: "What do you mainly need help with? (select all that apply)",
-    options: FOCUS_OPTIONS,
+    message: "What do you mainly need help with?",
+    options: FOCUS_OPTIONS.map((opt) => ({
+      ...opt,
+      selected: preset.focusAreas.includes(opt.value),
+    })),
     required: true,
   });
   if (p.isCancel(focusAreas)) {
@@ -80,6 +76,10 @@ export async function setupPersonality(ctx: SetupContext): Promise<void> {
   }
   ctx.personality.focusAreas = focusAreas as string[];
 
+  return writeFiles(ctx);
+}
+
+function writeFiles(ctx: SetupContext): void {
   const s = p.spinner();
   s.start("Generating configuration files...");
 

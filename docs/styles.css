@@ -433,6 +433,146 @@ code {
   color: var(--text);
 }
 
+/* Quick Setup form */
+.quick-setup {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.quick-setup h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.quick-setup-sub {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 36px;
+  font-size: 0.95rem;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-help {
+  font-size: 0.78rem;
+  color: var(--accent-dim);
+  font-weight: 400;
+}
+
+.form-row input,
+.form-row select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  border-color: var(--accent-dim);
+}
+
+.form-row input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+.form-row select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%238888a0' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.form-row select option {
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.generate-btn {
+  margin-top: 8px;
+  padding: 14px 24px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.generate-btn:hover {
+  background: var(--accent-dim);
+}
+
+.generate-btn:active {
+  transform: scale(0.98);
+}
+
+.form-security {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.generated-output {
+  margin-top: 28px;
+}
+
+.generated-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.install-box-generated {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.install-box-generated code {
+  font-size: 0.75rem;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.5;
+  flex: 1;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .hero {

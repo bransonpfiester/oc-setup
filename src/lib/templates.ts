@@ -6,6 +6,46 @@ export interface TemplateInputs {
   focusAreas: string[];
 }
 
+export type PresetKey = "business" | "creative" | "developer" | "general";
+
+export interface PersonalityPreset {
+  key: PresetKey;
+  label: string;
+  description: string;
+  focusAreas: string[];
+}
+
+export const PRESETS: PersonalityPreset[] = [
+  {
+    key: "business",
+    label: "Business",
+    description: "Direct and efficient. Helps run the business.",
+    focusAreas: ["Email monitoring", "Calendar management", "Research"],
+  },
+  {
+    key: "creative",
+    label: "Creative",
+    description: "Imaginative and supportive. Helps with creative projects.",
+    focusAreas: ["Writing", "Research", "Social media"],
+  },
+  {
+    key: "developer",
+    label: "Developer",
+    description: "Technical and precise. Helps with code and systems.",
+    focusAreas: ["Code/development", "Research"],
+  },
+  {
+    key: "general",
+    label: "General",
+    description: "Friendly and helpful all-rounder.",
+    focusAreas: ["Email monitoring", "Calendar management", "Research"],
+  },
+];
+
+export function getPreset(key: string): PersonalityPreset | undefined {
+  return PRESETS.find((p) => p.key === key);
+}
+
 export function generateSoulMd(inputs: TemplateInputs): string {
   const focusList = inputs.focusAreas.map((a) => `- ${a}`).join("\n");
 

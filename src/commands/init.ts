@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { createContext } from "../steps/context.js";
+import { createContext, type SetupContext } from "../steps/context.js";
 import { detectOS } from "../steps/detect-os.js";
 import { checkNode } from "../steps/install-node.js";
 import { installOpenClaw } from "../steps/install-openclaw.js";
@@ -10,6 +10,8 @@ import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
 import { setupService } from "../steps/setup-service.js";
 import { verify } from "../steps/verify.js";
+import { getPreset } from "../lib/templates.js";
+import { MODEL_PROVIDERS } from "../lib/models.js";
 import { logger } from "../utils/logger.js";
 
 const BANNER = `
@@ -21,12 +23,69 @@ const BANNER = `
   ${pc.cyan("╚═════╝  ╚═════╝")}    ${pc.green("╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝")}
 `;
 
-export async function initCommand(): Promise<void> {
+interface ConfigPayload {
+  name?: string;
+  token?: string;
+  provider?: string;
+  apiKey?: string;
+  preset?: string;
+}
+
+function decodeConfig(payload: string): ConfigPayload | null {
+  try {
+    const json = Buffer.from(payload, "base64").toString("utf-8");
+    return JSON.parse(json) as ConfigPayload;
+  } catch {
+    return null;
+  }
+}
+
+function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
+  if (cfg.name) {
+    ctx.userName = cfg.name;
+    ctx.agentName = cfg.name;
+  }
+
+  if (cfg.token) {
+    ctx.telegram = { token: cfg.token, botUsername: "" };
+  }
+
+  if (cfg.provider && cfg.apiKey) {
+    const providerInfo = MODEL_PROVIDERS.find((m) => m.provider === cfg.provider);
+    ctx.model = {
+      provider: cfg.provider,
+      apiKey: cfg.apiKey,
+      modelId: providerInfo?.defaultModel ?? "",
+    };
+  }
+
+  if (cfg.preset) {
+    const preset = getPreset(cfg.preset);
+    if (preset) {
+      ctx.personality.description = preset.description;
+      ctx.personality.focusAreas = preset.focusAreas;
+    }
+  }
+}
+
+export async function initCommand(configPayload?: string): Promise<void> {
   console.log(BANNER);
   p.intro(pc.bold("Welcome to OpenClaw Setup! Let's get your AI agent running."));
 
   logger.info("Starting oc-setup init");
   const ctx = createContext();
+
+  if (configPayload) {
+    const cfg = decodeConfig(configPayload);
+    if (cfg) {
+      p.log.success("Using pre-filled configuration from --config");
+      logger.info("Config payload decoded successfully");
+      applyConfig(ctx, cfg);
+    } else {
+      p.log.warn("Could not decode --config payload. Falling back to interactive setup.");
+      logger.warn("Failed to decode config payload");
+    }
+  }
 
   const steps: { name: string; fn: () => Promise<void> }[] = [
     { name: "OS Detection", fn: () => detectOS(ctx) },
