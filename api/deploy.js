@@ -1,22 +1,16 @@
-const RAILWAY_API = "https://backboard.railway.com/graphql/v2";
-
 export default async function handler(req) {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders(),
-    });
+    return json(null, 204);
   }
 
   if (req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
   }
 
-  const token = process.env.RAILWAY_API_TOKEN;
-  const projectId = process.env.RAILWAY_PROJECT_ID;
-  const environmentId = process.env.RAILWAY_ENVIRONMENT_ID;
+  const serverIp = process.env.HETZNER_SERVER_IP;
+  const sshKey = process.env.HETZNER_SSH_PRIVATE_KEY;
 
-  if (!token || !projectId || !environmentId) {
+  if (!serverIp || !sshKey) {
     return json({ error: "Cloud deployment is not configured on the server." }, 503);
   }
 
@@ -33,99 +27,81 @@ export default async function handler(req) {
     return json({ error: "telegramToken and apiKey are required." }, 400);
   }
 
-  const serviceName = `openclaw-${(name || "agent").toLowerCase().replace(/[^a-z0-9]/g, "-")}-${Date.now().toString(36)}`;
+  const safeName = (name || "agent")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .slice(0, 30);
+  const containerName = `openclaw-${safeName}-${Date.now().toString(36)}`;
+  const modelId = getModelId(provider);
+
+  const dockerCmd = [
+    "docker run -d",
+    `--name ${containerName}`,
+    "--restart unless-stopped",
+    `--memory=256m`,
+    `--cpus=0.25`,
+    `-e TELEGRAM_BOT_TOKEN='${escapeShell(telegramToken)}'`,
+    `-e MODEL_PROVIDER='${escapeShell(provider || "anthropic")}'`,
+    `-e MODEL_API_KEY='${escapeShell(apiKey)}'`,
+    `-e MODEL_ID='${escapeShell(modelId)}'`,
+    `-e AGENT_PRESET='${escapeShell(preset || "business")}'`,
+    `-e AGENT_NAME='${escapeShell(name || "OpenClaw Agent")}'`,
+    "ghcr.io/openclaw/openclaw:latest",
+  ].join(" ");
 
   try {
-    const service = await railwayQuery(token, CREATE_SERVICE, {
-      input: {
-        projectId,
-        name: serviceName,
-        source: { image: "ghcr.io/openclaw/openclaw:latest" },
-      },
-    });
+    const result = await sshExec(serverIp, sshKey, dockerCmd);
 
-    const serviceId = service.data?.serviceCreate?.id;
-    if (!serviceId) {
-      console.error("serviceCreate response:", JSON.stringify(service));
-      return json({ error: "Failed to create Railway service." }, 502);
+    if (result.exitCode !== 0) {
+      console.error("Docker run failed:", result.stderr);
+      return json({ error: "Failed to start agent container." }, 502);
     }
 
-    const variables = {
-      TELEGRAM_BOT_TOKEN: telegramToken,
-      MODEL_PROVIDER: provider || "anthropic",
-      MODEL_API_KEY: apiKey,
-      MODEL_ID: getModelId(provider),
-      AGENT_PRESET: preset || "business",
-      AGENT_NAME: name || "OpenClaw Agent",
-    };
-
-    await railwayQuery(token, UPSERT_VARIABLES, {
-      input: {
-        projectId,
-        environmentId,
-        serviceId,
-        variables,
-      },
-    });
-
-    await railwayQuery(token, DEPLOY_SERVICE, {
-      serviceId,
-      environmentId,
-    });
+    const containerId = result.stdout.trim().slice(0, 12);
 
     return json({
       success: true,
-      serviceName,
-      serviceId,
-      message: `Agent "${serviceName}" is deploying. It should be live in ~60 seconds.`,
+      containerName,
+      containerId,
+      message: `Agent "${containerName}" is running on the cloud server.`,
     });
   } catch (err) {
-    console.error("Railway deploy error:", err);
-    return json({ error: "Deployment failed. Please try again." }, 502);
+    console.error("SSH deploy error:", err);
+    return json({ error: "Could not connect to cloud server." }, 502);
   }
 }
 
-const CREATE_SERVICE = `
-  mutation serviceCreate($input: ServiceCreateInput!) {
-    serviceCreate(input: $input) {
-      id
-      name
-    }
-  }
-`;
+async function sshExec(host, privateKey, command) {
+  const { Client } = await import("ssh2");
 
-const UPSERT_VARIABLES = `
-  mutation variableCollectionUpsert($input: VariableCollectionUpsertInput!) {
-    variableCollectionUpsert(input: $input)
-  }
-`;
+  return new Promise((resolve, reject) => {
+    const conn = new Client();
+    let stdout = "";
+    let stderr = "";
 
-const DEPLOY_SERVICE = `
-  mutation serviceInstanceDeploy($serviceId: String!, $environmentId: String!) {
-    serviceInstanceDeploy(serviceId: $serviceId, environmentId: $environmentId)
-  }
-`;
-
-async function railwayQuery(token, query, variables) {
-  const res = await fetch(RAILWAY_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ query, variables }),
+    conn
+      .on("ready", () => {
+        conn.exec(command, (err, stream) => {
+          if (err) {
+            conn.end();
+            return reject(err);
+          }
+          stream.on("data", (data) => { stdout += data.toString(); });
+          stream.stderr.on("data", (data) => { stderr += data.toString(); });
+          stream.on("close", (code) => {
+            conn.end();
+            resolve({ stdout, stderr, exitCode: code });
+          });
+        });
+      })
+      .on("error", reject)
+      .connect({
+        host,
+        port: 22,
+        username: "root",
+        privateKey,
+      });
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Railway API ${res.status}: ${text}`);
-  }
-
-  const data = await res.json();
-  if (data.errors) {
-    throw new Error(`Railway GraphQL: ${JSON.stringify(data.errors)}`);
-  }
-  return data;
 }
 
 function getModelId(provider) {
@@ -136,20 +112,18 @@ function getModelId(provider) {
   }
 }
 
+function escapeShell(str) {
+  return String(str).replace(/'/g, "'\\''");
+}
+
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
+  return new Response(data ? JSON.stringify(data) : null, {
     status,
     headers: {
       "Content-Type": "application/json",
-      ...corsHeaders(),
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
   });
-}
-
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
 }

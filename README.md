@@ -75,24 +75,49 @@ Add additional channels post-setup. Currently available channels are coming in v
 
 ## Cloud Deployment
 
-The website includes a "Cloud server" option that deploys an OpenClaw agent to Railway via a Vercel serverless function.
+The website includes a "Cloud server" option that deploys OpenClaw agents as Docker containers on a Hetzner VPS via a Vercel serverless function. One $4/mo server can host 50+ client agents.
 
-### Required Environment Variables (set in Vercel dashboard)
+### Server Setup (one-time)
+
+1. Create a Hetzner Cloud account at [hetzner.com/cloud](https://www.hetzner.com/cloud/)
+2. Create a CX22 server (2 CPU, 4GB RAM, Ubuntu 24.04) -- ~$4/mo
+3. Add your SSH key during server creation
+4. Bootstrap the server:
+
+```bash
+ssh root@YOUR_SERVER_IP < scripts/setup-server.sh
+```
+
+This installs Docker, pulls the OpenClaw image, sets up auto-updates, and configures the firewall.
+
+### Vercel Environment Variables
+
+Set these in your [Vercel project settings](https://vercel.com/docs/environment-variables):
 
 | Variable | Description |
 | --- | --- |
-| `RAILWAY_API_TOKEN` | Railway account or team API token ([get one here](https://railway.com/account/tokens)) |
-| `RAILWAY_PROJECT_ID` | The Railway project ID where agent services are created |
-| `RAILWAY_ENVIRONMENT_ID` | The Railway environment ID (usually "production") |
+| `HETZNER_SERVER_IP` | Your server's IP address |
+| `HETZNER_SSH_PRIVATE_KEY` | SSH private key for root access (paste the full key including BEGIN/END lines) |
 
-### Setup
+### How it works
 
-1. Create a Railway project for hosting client agents
-2. Get your project ID and environment ID from the Railway dashboard URL or API
-3. Generate an API token at [railway.com/account/tokens](https://railway.com/account/tokens)
-4. Add all three as environment variables in your [Vercel project settings](https://vercel.com/docs/environment-variables)
+When a user clicks "Deploy to cloud" on the website:
+1. The Vercel function (`api/deploy.js`) connects to your Hetzner VPS via SSH
+2. Runs `docker run` with the client's config as environment variables
+3. Each agent runs in an isolated container with resource limits (256MB RAM, 0.25 CPU)
+4. Containers auto-restart on crash and server reboot
 
-The deploy endpoint lives at `api/deploy.js` and creates a new Railway service per client with the OpenClaw Docker image and their config as environment variables.
+### Managing agents
+
+SSH into your server and use Docker commands:
+
+```bash
+docker ps                         # list running agents
+docker logs openclaw-john-xxx     # view agent logs
+docker stop openclaw-john-xxx     # stop an agent
+docker rm openclaw-john-xxx       # remove an agent
+docker stats                      # resource usage
+```
 
 ## Development
 
