@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>oc-setup — OpenClaw Client Setup CLI</title>
-  <meta name="description" content="One command to go from zero to a working AI agent on Telegram. Replaces the manual setup with a guided, automated experience.">
+  <title>oc-setup — Get Your OpenClaw Running in Minutes</title>
+  <meta name="description" content="One command to go from zero to a working OpenClaw AI agent. Automates everything: Telegram, AI provider, personality, gateway, auto-start.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <nav class="nav">
     <div class="nav-inner">
-      <a href="/" class="nav-brand">oc-setup</a>
+      <a href="/" class="nav-brand"><span class="brand-icon">&#129438;</span> oc-setup</a>
       <div class="nav-links">
-        <a href="#quick-setup">Quick Setup</a>
+        <a href="#quick-setup">Setup</a>
         <a href="#features">Features</a>
-        <a href="#commands">Commands</a>
+        <a href="#testimonials">Community</a>
+        <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a>
         <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
@@ -26,18 +27,11 @@
 
   <main>
     <section class="hero">
-      <pre class="ascii-banner" aria-hidden="true">
- ██████╗  ██████╗    ███████╗███████╗████████╗██╗   ██╗██████╗
-██╔═══██╗██╔════╝    ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
-██║   ██║██║         ███████╗█████╗     ██║   ██║   ██║██████╔╝
-██║   ██║██║         ╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝
-╚██████╔╝╚██████╗    ███████║███████╗   ██║   ╚██████╔╝██║
- ╚═════╝  ╚═════╝    ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝</pre>
-      <h1>Zero to AI agent in one command.</h1>
+      <div class="hero-badge">Part of the <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a> ecosystem</div>
+      <h1>Your AI agent, running in minutes.</h1>
       <p class="hero-sub">
-        <strong>oc-setup</strong> automates OpenClaw client onboarding.
-        Run one command, answer a few questions, and have a fully configured
-        AI agent running on Telegram in minutes.
+        <strong>oc-setup</strong> takes you from zero to a fully configured
+        OpenClaw agent on Telegram. Two fields, one command, done.
       </p>
       <div class="install-box">
         <code id="install-cmd">npx oc-setup</code>
@@ -46,6 +40,7 @@
           <span class="copy-label">Copy</span>
         </button>
       </div>
+      <p class="hero-note">Requires Node.js 18+. No account needed.</p>
     </section>
 
     <section class="terminal-demo">
@@ -63,13 +58,13 @@
 <span class="t-success">&#10003;</span> Node.js v22.1.0 found
 <span class="t-success">&#10003;</span> OpenClaw v2026.3.2 installed
 
-<span class="t-prompt">?</span> What's your name? <span class="t-input">John</span>
-<span class="t-prompt">?</span> Which AI provider? <span class="t-input">Anthropic (Claude)</span>
 <span class="t-prompt">?</span> Paste your Telegram bot token: <span class="t-dim">7891234567:AAH...</span>
-
 <span class="t-success">&#10003;</span> Bot @johns_ai_bot connected!
-<span class="t-success">&#10003;</span> SOUL.md, USER.md generated
+
+<span class="t-prompt">?</span> Pick a personality: <span class="t-input">Business</span>
+<span class="t-success">&#10003;</span> SOUL.md, USER.md, HEARTBEAT.md generated
 <span class="t-success">&#10003;</span> Gateway running on port 18789
+<span class="t-success">&#10003;</span> Auto-start configured (launchd)
 
 <span class="t-bold">Your AI agent is LIVE!</span>
 Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
@@ -143,7 +138,7 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             </button>
             <button type="button" class="action-btn action-tertiary" onclick="showCurl()">
               <span class="action-icon">&gt;_</span>
-              Show curl command
+              curl | bash
             </button>
           </div>
 
@@ -166,39 +161,78 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     </section>
 
     <section id="features" class="features">
-      <h2>What it does</h2>
+      <h2>What oc-setup handles for you</h2>
       <div class="feature-grid">
         <div class="feature-card">
-          <div class="feature-icon">&#9881;</div>
-          <h3>Auto-detects everything</h3>
-          <p>OS, architecture, Node.js version, existing OpenClaw install. Installs what's missing, skips what's already there.</p>
+          <h3>Detects everything</h3>
+          <p>OS, architecture, Node.js, existing installs. Skips what's there, installs what's missing.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">&#9889;</div>
           <h3>Validates before saving</h3>
-          <p>Telegram bot tokens and AI API keys are checked against live APIs before they touch your config. No broken setups.</p>
+          <p>Telegram tokens and API keys are checked against live APIs before touching your config.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">&#128196;</div>
           <h3>Generates your agent files</h3>
-          <p>SOUL.md, USER.md, and HEARTBEAT.md are built from your answers. Your agent knows who you are from minute one.</p>
+          <p>SOUL.md, USER.md, HEARTBEAT.md built from your preferences. Your agent knows you from minute one.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">&#128268;</div>
-          <h3>Starts on boot</h3>
-          <p>Configures launchd (macOS) or systemd (Linux) so your agent is always running. No manual restart needed.</p>
+          <h3>Auto-starts on boot</h3>
+          <p>Configures launchd (macOS) or systemd (Linux). Your agent is always running.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">&#129658;</div>
           <h3>Built-in diagnostics</h3>
-          <p><code>oc-setup doctor</code> checks everything and tells you exactly what's wrong and how to fix it.</p>
+          <p><code>oc-setup doctor</code> checks everything and tells you exactly how to fix it.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">&#128260;</div>
-          <h3>Idempotent &amp; safe</h3>
-          <p>Run it again if something fails. Every step checks current state first. Reset backs up before wiping.</p>
+          <h3>Safe to re-run</h3>
+          <p>Every step is idempotent. If something fails, run it again. Reset backs up before wiping.</p>
         </div>
       </div>
+    </section>
+
+    <section id="testimonials" class="testimonials">
+      <h2>What people are saying about OpenClaw</h2>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial">
+          <p>"At this point I don't even know what to call @openclaw. It is something new. This is the first time I have felt like I am living in the future since the launch of ChatGPT."</p>
+          <cite><a href="https://x.com/davemorin" target="_blank" rel="noopener">@davemorin</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"It's running my company."</p>
+          <cite><a href="https://x.com/therno" target="_blank" rel="noopener">@therno</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"Me reading about @openclaw: 'this looks complicated.' Me 30 mins later: controlling Gmail, Calendar, WordPress, Hetzner from Telegram like a boss."</p>
+          <cite><a href="https://x.com/Abhay08" target="_blank" rel="noopener">@Abhay08</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"Took literally 5 mins to set everything up. Now it fetches directly from Whoop and gives me updates, summaries."</p>
+          <cite><a href="https://x.com/sharoni_k" target="_blank" rel="noopener">@sharoni_k</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"Everything Siri was supposed to be. And it goes so much further."</p>
+          <cite><a href="https://x.com/crossiBuilds" target="_blank" rel="noopener">@crossiBuilds</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"A megacorp like Anthropic or OpenAI could not build this. Literally impossible with how corpo works."</p>
+          <cite><a href="https://x.com/Dimillian" target="_blank" rel="noopener">@Dimillian</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"Named him Jarvis. Daily briefings, calendar checks, reminds me when to leave for pickleball based on traffic."</p>
+          <cite><a href="https://x.com/BraydonCoyer" target="_blank" rel="noopener">@BraydonCoyer</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"This is nuts. @openclaw is a superpower."</p>
+          <cite><a href="https://x.com/robmartinson" target="_blank" rel="noopener">@robmartinson</a></cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>"Using @openclaw for a week and it genuinely feels like early AGI. The gap between 'what I can imagine' and 'what actually works' has never been smaller."</p>
+          <cite><a href="https://x.com/tobi_bsf" target="_blank" rel="noopener">@tobi_bsf</a></cite>
+        </blockquote>
+      </div>
+      <p class="testimonial-cta">
+        <a href="https://openclaw.ai/shoutouts" target="_blank" rel="noopener">See all testimonials on openclaw.ai &rarr;</a>
+      </p>
     </section>
 
     <section id="commands" class="commands">
@@ -206,19 +240,19 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       <div class="cmd-list">
         <div class="cmd-item">
           <code>npx oc-setup</code>
-          <p>Full guided setup. Detects OS, installs OpenClaw, configures Telegram, sets up your AI model, generates personality files, starts the gateway, and verifies everything works.</p>
+          <p>Full guided setup. Detects OS, installs OpenClaw, configures Telegram, sets up your AI model, generates personality files, starts the gateway, verifies everything.</p>
         </div>
         <div class="cmd-item">
           <code>oc-setup doctor</code>
-          <p>Diagnoses common issues: Node version, port conflicts, expired tokens, gateway crashes. Outputs a health report with one-liner fix commands.</p>
+          <p>Diagnoses common issues: Node version, port conflicts, expired tokens, gateway crashes. Outputs a health report with fix commands.</p>
         </div>
         <div class="cmd-item">
           <code>oc-setup update</code>
-          <p>Updates OpenClaw to latest, preserves your config, restarts the gateway automatically.</p>
+          <p>Updates OpenClaw to latest, preserves your config, restarts the gateway.</p>
         </div>
         <div class="cmd-item">
           <code>oc-setup reset</code>
-          <p>Nuclear option. Backs up current config to a timestamped folder, wipes everything, and re-runs setup from scratch.</p>
+          <p>Backs up current config, wipes everything, re-runs setup from scratch.</p>
         </div>
       </div>
     </section>
@@ -272,7 +306,7 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     </section>
 
     <section class="cta">
-      <h2>Get started now</h2>
+      <h2>Get your OpenClaw running</h2>
       <div class="install-box install-box-lg">
         <code id="install-cmd-2">npx oc-setup</code>
         <button class="copy-btn" onclick="copyInstall()" aria-label="Copy install command">
@@ -281,7 +315,7 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
         </button>
       </div>
       <p class="cta-sub">
-        Need a custom setup with advanced integrations?
+        Want custom integrations or a hands-on walkthrough?
         <a href="https://openclaw.ai" target="_blank" rel="noopener">Book a setup call</a>
       </p>
     </section>
@@ -289,8 +323,11 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
 
   <footer class="footer">
     <div class="footer-inner">
-      <span>oc-setup &middot; built by <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a></span>
-      <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+      <span>oc-setup &middot; part of <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a></span>
+      <div class="footer-links">
+        <a href="https://openclaw.ai" target="_blank" rel="noopener">openclaw.ai</a>
+        <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+      </div>
     </div>
   </footer>
 
@@ -315,14 +352,11 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     function getFormData() {
       const token = document.getElementById('qs-token').value.trim();
       const apiKey = document.getElementById('qs-apikey').value.trim();
-
       if (!token || !apiKey) return null;
-
       const providerSel = document.getElementById('qs-provider').value;
       const provider = providerSel === 'auto' ? detectProvider(apiKey) : providerSel;
       const name = document.getElementById('qs-name').value.trim() || undefined;
       const preset = document.getElementById('qs-preset').value;
-
       const config = { token, provider, apiKey, preset };
       if (name) config.name = name;
       return config;
@@ -422,7 +456,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
       showFeedback('Downloaded! Double-click oc-install.command to run it.');
     }
 
@@ -430,7 +463,6 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       if (!validateRequired()) return;
       const payload = getPayload();
       const cmd = 'curl -fsSL https://oc-setup.vercel.app/install.sh | bash -s -- ' + payload;
-
       document.getElementById('curl-cmd').textContent = cmd;
       document.getElementById('curl-output').hidden = false;
       document.getElementById('curl-output').scrollIntoView({ behavior: 'smooth', block: 'center' });
