@@ -1,0 +1,9 @@
+src/
+docs/
+scripts/
+tsconfig.json
+tsup.config.ts
+PRD-oc-setup.md
+vercel.json
+.vercel/
+*.map
