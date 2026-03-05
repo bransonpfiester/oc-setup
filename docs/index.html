@@ -180,20 +180,21 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
           </div>
 
           <div class="form-row">
-            <label>Skills to install <span class="form-help">(via <a href="https://clawhub.com" target="_blank" rel="noopener">ClawHub</a>)</span></label>
+            <label>OpenClaw bundled skills</label>
             <div class="skills-grid">
-              <label class="skill-checkbox"><input type="checkbox" value="gog" checked><span>Google Workspace</span><span class="skill-desc">Gmail, Calendar, Drive</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="agent-browser" checked><span>Agent Browser</span><span class="skill-desc">Web browsing</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="summarize" checked><span>Summarize</span><span class="skill-desc">Content summaries</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="github"><span>GitHub</span><span class="skill-desc">PRs, issues, repos</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="capability-evolver"><span>Capability Evolver</span><span class="skill-desc">Self-improving agent</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="nano-banana-pro"><span>Image Generation</span><span class="skill-desc">Gemini image gen</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="peekaboo"><span>Peekaboo</span><span class="skill-desc">Screenshot + vision</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="wacli"><span>Wacli</span><span class="skill-desc">CLI dev tools</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="self-improving-agent"><span>Self-Improving Agent</span><span class="skill-desc">Autonomous learning</span></label>
-              <label class="skill-checkbox"><input type="checkbox" value="byterover"><span>ByteRover</span><span class="skill-desc">Multi-purpose tasks</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="brave-search" checked data-needs-key="BRAVE_API_KEY"><span>Web Search</span><span class="skill-desc">Brave Search API</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="summarize" checked><span>Summarize</span><span class="skill-desc">URLs, videos, podcasts</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="peekaboo" checked><span>Peekaboo</span><span class="skill-desc">Screenshots + vision</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="gemini" data-needs-key="GEMINI_API_KEY"><span>Gemini CLI</span><span class="skill-desc">Coding + Google search</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="nano-banana-pro" data-needs-key="GEMINI_API_KEY"><span>Image Generation</span><span class="skill-desc">Gemini image gen/edit</span></label>
+              <label class="skill-checkbox"><input type="checkbox" value="sag" data-needs-key="ELEVENLABS_API_KEY"><span>Voice (SAG)</span><span class="skill-desc">ElevenLabs text-to-speech</span></label>
             </div>
-            <span class="field-hint">Browse 3,000+ more at <a href="https://clawhub.com" target="_blank" rel="noopener">clawhub.com</a></span>
+            <span class="field-hint">These ship with OpenClaw. Browse 3,000+ more at <a href="https://clawhub.com" target="_blank" rel="noopener">clawhub.com</a></span>
+          </div>
+
+          <div id="skill-keys" class="skill-keys" hidden>
+            <label class="form-row-label">API keys for selected skills</label>
+            <div id="skill-key-fields"></div>
           </div>
 
           <details class="advanced-toggle">
@@ -387,6 +388,53 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       });
     }
 
+    const SKILL_KEY_INFO = {
+      BRAVE_API_KEY: { label: 'Brave Search API key', placeholder: 'BSA...', link: 'https://brave.com/search/api/', linkText: 'Get one' },
+      GEMINI_API_KEY: { label: 'Gemini API key', placeholder: 'AIza...', link: 'https://aistudio.google.com/apikey', linkText: 'Get one' },
+      ELEVENLABS_API_KEY: { label: 'ElevenLabs API key', placeholder: 'sk_...', link: 'https://elevenlabs.io/app/settings/api-keys', linkText: 'Get one' },
+    };
+
+    function updateSkillKeys() {
+      const checked = document.querySelectorAll('.skill-checkbox input:checked[data-needs-key]');
+      const needed = new Set();
+      checked.forEach(cb => needed.add(cb.dataset.needsKey));
+
+      const container = document.getElementById('skill-key-fields');
+      const section = document.getElementById('skill-keys');
+
+      if (needed.size === 0) {
+        section.hidden = true;
+        container.innerHTML = '';
+        return;
+      }
+
+      section.hidden = false;
+      const existing = new Set(container.querySelectorAll('input').values());
+      container.innerHTML = '';
+
+      needed.forEach(key => {
+        const info = SKILL_KEY_INFO[key];
+        if (!info) return;
+        const id = 'sk-' + key;
+        const row = document.createElement('div');
+        row.className = 'form-row';
+        row.innerHTML = `<label for="${id}">${info.label} <a href="${info.link}" target="_blank" rel="noopener" class="form-help">${info.linkText}</a></label><input type="password" id="${id}" placeholder="${info.placeholder}" data-skill-key="${key}">`;
+        container.appendChild(row);
+      });
+    }
+
+    document.addEventListener('change', e => {
+      if (e.target.closest('.skill-checkbox')) updateSkillKeys();
+    });
+
+    function getSkillKeys() {
+      const keys = {};
+      document.querySelectorAll('#skill-key-fields input[data-skill-key]').forEach(input => {
+        if (input.value.trim()) keys[input.dataset.skillKey] = input.value.trim();
+      });
+      return keys;
+    }
+
     function detectProvider(apiKey) {
       if (apiKey.startsWith('sk-ant-')) return 'anthropic';
       if (apiKey.startsWith('sk-or-')) return 'openrouter';
@@ -433,8 +481,10 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       const name = document.getElementById('qs-name').value.trim() || undefined;
       const preset = document.getElementById('qs-preset').value;
       const skills = getSelectedSkills();
+      const skillKeys = getSkillKeys();
       const config = { userId, token, provider, apiKey, modelId, preset, skills };
       if (name) config.name = name;
+      if (Object.keys(skillKeys).length > 0) config.skillKeys = skillKeys;
       return config;
     }
 
