@@ -16,58 +16,26 @@ async function runDoctorFix(): Promise<void> {
 
 async function runOnboard(ctx: SetupContext): Promise<void> {
   const args = buildOnboardArgs(ctx);
-  const needsInteractive = isInteractiveAuth(ctx);
 
-  if (needsInteractive) {
-    p.log.info("Opening OpenClaw onboarding (this may open your browser)...");
-    console.log("");
+  p.log.info("Running OpenClaw onboarding...");
+  p.log.info("You may need to accept a security warning and confirm prompts.");
+  console.log("");
 
-    const exitCode = await runInteractive("openclaw", ["onboard", ...args]);
+  const exitCode = await runInteractive("openclaw", ["onboard", ...args]);
 
-    console.log("");
-    if (exitCode === 0) {
-      p.log.success("OpenClaw onboarding complete");
-      logger.info("openclaw onboard succeeded (interactive)");
-    } else {
-      p.log.warn("Onboarding had issues.");
-      p.log.info("You can run manually: openclaw onboard");
-      logger.warn(`onboard interactive exit ${exitCode}`);
-    }
+  console.log("");
+  if (exitCode === 0) {
+    p.log.success("OpenClaw onboarding complete");
+    logger.info("openclaw onboard succeeded");
   } else {
-    const s = p.spinner();
-    s.start("Running OpenClaw onboarding...");
-
-    const cmd = `openclaw onboard ${args.join(" ")}`;
-    logger.info(`Running: ${cmd.replace(/--\S+-api-key\s+\S+/g, "--***-api-key ***")}`);
-
-    const result = await runShell(cmd, { timeout: 120_000 });
-
-    if (result.exitCode === 0) {
-      s.stop("OpenClaw onboarding complete");
-      logger.info("openclaw onboard succeeded");
-    } else {
-      s.stop("Onboarding had issues");
-      logger.warn(`onboard exit ${result.exitCode}: ${result.stderr || result.stdout}`);
-
-      if (result.stdout.includes("already") || result.stderr.includes("already")) {
-        p.log.info("OpenClaw appears to be already configured.");
-      } else {
-        p.log.warn("Onboarding encountered issues.");
-        p.log.info("You can run manually: openclaw onboard");
-      }
-    }
+    p.log.warn("Onboarding had issues.");
+    p.log.info("You can run manually: openclaw onboard");
+    logger.warn(`onboard exit ${exitCode}`);
   }
-}
-
-function isInteractiveAuth(ctx: SetupContext): boolean {
-  if (!ctx.model) return false;
-  const method = ctx.model.authMethod || "api-key";
-  return ["oauth", "setup-token", "codex-oauth"].includes(method);
 }
 
 function buildOnboardArgs(ctx: SetupContext): string[] {
   const args = [
-    "--non-interactive",
     "--mode", "local",
     "--flow", "quickstart",
     "--gateway-port", String(ctx.gatewayPort),
@@ -75,7 +43,7 @@ function buildOnboardArgs(ctx: SetupContext): string[] {
     "--install-daemon",
     "--daemon-runtime", "node",
     "--secret-input-mode", "plaintext",
-    "--skip-skills",
+    "--accept-risk",
   ];
 
   if (!ctx.model) return args;
@@ -89,18 +57,12 @@ function buildOnboardArgs(ctx: SetupContext): string[] {
   }
   if (ctx.model.provider === "anthropic" && method === "setup-token") {
     args.push("--auth-choice", "anthropic-token");
-    // Setup token is passed interactively by onboard, remove --non-interactive
-    const niIdx = args.indexOf("--non-interactive");
-    if (niIdx !== -1) args.splice(niIdx, 1);
     return args;
   }
 
   // OpenAI subscription methods
   if (ctx.model.provider === "openai" && method === "codex-oauth") {
     args.push("--auth-choice", "openai-code-oauth");
-    // OAuth needs browser, remove --non-interactive
-    const niIdx = args.indexOf("--non-interactive");
-    if (niIdx !== -1) args.splice(niIdx, 1);
     return args;
   }
   if (ctx.model.provider === "openai" && method === "codex-reuse") {
