@@ -8,6 +8,7 @@ export interface SetupContext {
   telegram: { token: string; botUsername: string } | null;
   model: { provider: string; apiKey: string; modelId: string } | null;
   personality: { description: string; focusAreas: string[] };
+  skills: string[];
   gatewayPort: number;
   gatewayPid: number | null;
 }
@@ -23,6 +24,7 @@ export function createContext(): SetupContext {
     telegram: null,
     model: null,
     personality: { description: "", focusAreas: [] },
+    skills: [],
     gatewayPort: 18789,
     gatewayPid: null,
   };

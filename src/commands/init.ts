@@ -9,6 +9,7 @@ import { setupModel } from "../steps/setup-model.js";
 import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
 import { setupService } from "../steps/setup-service.js";
+import { installClawHub } from "../steps/install-clawhub.js";
 import { verify } from "../steps/verify.js";
 import { getPreset } from "../lib/templates.js";
 import { MODEL_PROVIDERS } from "../lib/models.js";
@@ -25,10 +26,13 @@ const BANNER = `
 
 interface ConfigPayload {
   name?: string;
+  userId?: string;
   token?: string;
   provider?: string;
   apiKey?: string;
+  modelId?: string;
   preset?: string;
+  skills?: string[];
 }
 
 function decodeConfig(payload: string): ConfigPayload | null {
@@ -55,8 +59,12 @@ function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
     ctx.model = {
       provider: cfg.provider,
       apiKey: cfg.apiKey,
-      modelId: providerInfo?.defaultModel ?? "",
+      modelId: cfg.modelId ?? providerInfo?.defaultModel ?? "",
     };
+  }
+
+  if (cfg.skills && cfg.skills.length > 0) {
+    ctx.skills = cfg.skills;
   }
 
   if (cfg.preset) {
@@ -94,6 +102,7 @@ export async function initCommand(configPayload?: string): Promise<void> {
     { name: "Telegram Setup", fn: () => setupTelegram(ctx) },
     { name: "AI Model", fn: () => setupModel(ctx) },
     { name: "Agent Personality", fn: () => setupPersonality(ctx) },
+    { name: "ClawHub + Skills", fn: () => installClawHub(ctx) },
     { name: "Gateway", fn: () => setupGateway(ctx) },
     { name: "Auto-Start", fn: () => setupService(ctx) },
     { name: "Verification", fn: () => verify(ctx) },
