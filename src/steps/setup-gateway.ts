@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { runShell, run } from "../utils/exec.js";
+import { runShell, run, runInteractive } from "../utils/exec.js";
 import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
 
@@ -15,30 +15,54 @@ async function runDoctorFix(): Promise<void> {
 }
 
 async function runOnboard(ctx: SetupContext): Promise<void> {
-  const s = p.spinner();
-  s.start("Running OpenClaw onboarding...");
-
   const args = buildOnboardArgs(ctx);
-  const cmd = `openclaw onboard ${args.join(" ")}`;
+  const needsInteractive = isInteractiveAuth(ctx);
 
-  logger.info(`Running: ${cmd.replace(/--\S+-api-key\s+\S+/g, "--***-api-key ***")}`);
+  if (needsInteractive) {
+    p.log.info("Opening OpenClaw onboarding (this may open your browser)...");
+    console.log("");
 
-  const result = await runShell(cmd, { timeout: 120_000 });
+    const exitCode = await runInteractive("openclaw", ["onboard", ...args]);
 
-  if (result.exitCode === 0) {
-    s.stop("OpenClaw onboarding complete");
-    logger.info("openclaw onboard succeeded");
-  } else {
-    s.stop("Onboarding had issues");
-    logger.warn(`onboard exit ${result.exitCode}: ${result.stderr || result.stdout}`);
-
-    if (result.stdout.includes("already") || result.stderr.includes("already")) {
-      p.log.info("OpenClaw appears to be already configured.");
+    console.log("");
+    if (exitCode === 0) {
+      p.log.success("OpenClaw onboarding complete");
+      logger.info("openclaw onboard succeeded (interactive)");
     } else {
-      p.log.warn("Onboarding encountered issues.");
+      p.log.warn("Onboarding had issues.");
       p.log.info("You can run manually: openclaw onboard");
+      logger.warn(`onboard interactive exit ${exitCode}`);
+    }
+  } else {
+    const s = p.spinner();
+    s.start("Running OpenClaw onboarding...");
+
+    const cmd = `openclaw onboard ${args.join(" ")}`;
+    logger.info(`Running: ${cmd.replace(/--\S+-api-key\s+\S+/g, "--***-api-key ***")}`);
+
+    const result = await runShell(cmd, { timeout: 120_000 });
+
+    if (result.exitCode === 0) {
+      s.stop("OpenClaw onboarding complete");
+      logger.info("openclaw onboard succeeded");
+    } else {
+      s.stop("Onboarding had issues");
+      logger.warn(`onboard exit ${result.exitCode}: ${result.stderr || result.stdout}`);
+
+      if (result.stdout.includes("already") || result.stderr.includes("already")) {
+        p.log.info("OpenClaw appears to be already configured.");
+      } else {
+        p.log.warn("Onboarding encountered issues.");
+        p.log.info("You can run manually: openclaw onboard");
+      }
     }
   }
+}
+
+function isInteractiveAuth(ctx: SetupContext): boolean {
+  if (!ctx.model) return false;
+  const method = ctx.model.authMethod || "api-key";
+  return ["oauth", "setup-token", "codex-oauth"].includes(method);
 }
 
 function buildOnboardArgs(ctx: SetupContext): string[] {

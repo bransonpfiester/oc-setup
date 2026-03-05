@@ -1,4 +1,4 @@
-import { execFile, exec as execCb } from "node:child_process";
+import { execFile, exec as execCb, spawn } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -53,4 +53,19 @@ export async function runShell(
       exitCode: e.code ?? 1,
     };
   }
+}
+
+export async function runInteractive(
+  command: string,
+  args: string[] = [],
+): Promise<number> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      stdio: "inherit",
+      shell: true,
+      env: process.env,
+    });
+    child.on("close", (code) => resolve(code ?? 1));
+    child.on("error", () => resolve(1));
+  });
 }
