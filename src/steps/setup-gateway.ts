@@ -4,127 +4,166 @@ import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
 
 export async function setupGateway(ctx: SetupContext): Promise<void> {
-  await cleanBadConfig();
-  await tryOnboard(ctx);
+  await runDoctorFix();
+  await runOnboard(ctx);
   await installGatewayService();
   await startGateway(ctx);
 }
 
-async function cleanBadConfig(): Promise<void> {
-  const result = await runShell("openclaw doctor --fix 2>&1", { timeout: 30_000 });
-  if (result.exitCode === 0) {
-    logger.info("openclaw doctor --fix ran successfully");
-  }
+async function runDoctorFix(): Promise<void> {
+  await runShell("openclaw doctor --fix 2>&1", { timeout: 30_000 });
 }
 
-async function tryOnboard(ctx: SetupContext): Promise<void> {
+async function runOnboard(ctx: SetupContext): Promise<void> {
   const s = p.spinner();
   s.start("Running OpenClaw onboarding...");
 
-  const envVars = buildEnvVars(ctx);
-  const authFlag = getAuthFlag(ctx);
+  const args = buildOnboardArgs(ctx);
+  const cmd = `openclaw onboard ${args.join(" ")}`;
 
-  const cmd = [
-    "openclaw onboard --non-interactive",
-    "--flow quickstart",
-    "--install-daemon",
-    authFlag,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  logger.info(`Running: ${cmd.replace(/--\S+-api-key\s+\S+/g, "--***-api-key ***")}`);
 
-  logger.info(`Running: ${cmd}`);
-
-  const result = await runShell(cmd, { timeout: 120_000, env: envVars });
+  const result = await runShell(cmd, { timeout: 120_000 });
 
   if (result.exitCode === 0) {
     s.stop("OpenClaw onboarding complete");
     logger.info("openclaw onboard succeeded");
   } else {
-    s.stop("Onboarding had issues, setting up manually");
+    s.stop("Onboarding had issues");
     logger.warn(`onboard exit ${result.exitCode}: ${result.stderr || result.stdout}`);
+
+    if (result.stdout.includes("already") || result.stderr.includes("already")) {
+      p.log.info("OpenClaw appears to be already configured.");
+    } else {
+      p.log.warn("Onboarding encountered issues.");
+      p.log.info("You can run manually: openclaw onboard");
+    }
   }
+}
+
+function buildOnboardArgs(ctx: SetupContext): string[] {
+  const args = [
+    "--non-interactive",
+    "--mode", "local",
+    "--flow", "quickstart",
+    "--gateway-port", String(ctx.gatewayPort),
+    "--gateway-bind", "loopback",
+    "--install-daemon",
+    "--daemon-runtime", "node",
+    "--secret-input-mode", "plaintext",
+    "--skip-skills",
+  ];
+
+  if (!ctx.model) return args;
+
+  switch (ctx.model.provider) {
+    case "anthropic":
+      args.push("--auth-choice", "anthropic-api-key");
+      args.push("--anthropic-api-key", ctx.model.apiKey);
+      break;
+    case "openai":
+      args.push("--auth-choice", "openai-api-key");
+      args.push("--openai-api-key", ctx.model.apiKey);
+      break;
+    case "google":
+      args.push("--auth-choice", "gemini-api-key");
+      args.push("--gemini-api-key", ctx.model.apiKey);
+      break;
+    case "mistral":
+      args.push("--auth-choice", "mistral-api-key");
+      args.push("--mistral-api-key", ctx.model.apiKey);
+      break;
+    case "moonshot":
+      args.push("--auth-choice", "moonshot-api-key");
+      args.push("--moonshot-api-key", ctx.model.apiKey);
+      break;
+    case "xai":
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-base-url", "https://api.x.ai/v1");
+      args.push("--custom-model-id", ctx.model.modelId || "grok-4");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-provider-id", "xai");
+      args.push("--custom-compatibility", "openai");
+      break;
+    case "deepseek":
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-base-url", "https://api.deepseek.com/v1");
+      args.push("--custom-model-id", ctx.model.modelId || "deepseek-chat");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-provider-id", "deepseek");
+      args.push("--custom-compatibility", "openai");
+      break;
+    case "perplexity":
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-base-url", "https://api.perplexity.ai");
+      args.push("--custom-model-id", ctx.model.modelId || "sonar-pro");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-provider-id", "perplexity");
+      args.push("--custom-compatibility", "openai");
+      break;
+    case "groq":
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-base-url", "https://api.groq.com/openai/v1");
+      args.push("--custom-model-id", ctx.model.modelId || "llama-3.3-70b-versatile");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-provider-id", "groq");
+      args.push("--custom-compatibility", "openai");
+      break;
+    case "openrouter":
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-base-url", "https://openrouter.ai/api/v1");
+      args.push("--custom-model-id", ctx.model.modelId || "anthropic/claude-sonnet-4-6");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-provider-id", "openrouter");
+      args.push("--custom-compatibility", "openai");
+      break;
+    default:
+      args.push("--auth-choice", "custom-api-key");
+      args.push("--custom-api-key", ctx.model.apiKey);
+      args.push("--custom-compatibility", "openai");
+      break;
+  }
+
+  return args;
 }
 
 async function installGatewayService(): Promise<void> {
   const checkResult = await runShell("openclaw gateway status 2>&1");
-  if (
-    checkResult.stdout.includes("Service not installed") ||
+  const needs = checkResult.stdout.includes("not installed") ||
     checkResult.stdout.includes("not loaded") ||
-    checkResult.stdout.includes("not found")
-  ) {
+    checkResult.stdout.includes("not found");
+
+  if (needs) {
     const s = p.spinner();
     s.start("Installing gateway service...");
-
-    const installResult = await runShell("openclaw gateway install 2>&1", { timeout: 30_000 });
-
-    if (installResult.exitCode === 0) {
+    const result = await runShell("openclaw gateway install 2>&1", { timeout: 30_000 });
+    if (result.exitCode === 0) {
       s.stop("Gateway service installed");
-      logger.info("Gateway service installed");
     } else {
-      s.stop("Gateway service install had issues");
-      logger.warn(`gateway install: ${installResult.stderr || installResult.stdout}`);
+      s.stop("Could not install gateway service");
       p.log.info("Install manually: openclaw gateway install");
+      logger.warn(`gateway install: ${result.stderr || result.stdout}`);
     }
-  } else {
-    p.log.success("Gateway service already installed");
   }
 }
 
 async function startGateway(ctx: SetupContext): Promise<void> {
   const statusResult = await run("openclaw", ["gateway", "status"]);
-  const statusText = statusResult.stdout.toLowerCase();
-
-  if (statusText.includes("running") && !statusText.includes("not")) {
+  if (statusResult.stdout.toLowerCase().includes("running") &&
+      !statusResult.stdout.toLowerCase().includes("not")) {
     p.log.success("Gateway is running");
     return;
   }
 
   const s = p.spinner();
   s.start("Starting gateway...");
-
-  const startResult = await runShell("openclaw gateway start 2>&1", { timeout: 30_000 });
-
-  if (startResult.exitCode === 0) {
+  const result = await runShell("openclaw gateway start 2>&1", { timeout: 30_000 });
+  if (result.exitCode === 0) {
     s.stop("Gateway started");
-    logger.info("Gateway started successfully");
+    logger.info("Gateway started");
   } else {
-    s.stop("Gateway start had issues");
-    logger.warn(`Gateway start: ${startResult.stderr || startResult.stdout}`);
-
-    await runShell("openclaw gateway launch 2>&1", { timeout: 30_000 });
-    p.log.info("If the gateway isn't running, start manually: openclaw gateway start");
+    s.stop("Could not start gateway");
+    p.log.info("Start manually: openclaw gateway start");
+    logger.warn(`Gateway start: ${result.stderr || result.stdout}`);
   }
-}
-
-function getAuthFlag(ctx: SetupContext): string {
-  if (!ctx.model) return "";
-  switch (ctx.model.provider) {
-    case "anthropic": return "--auth-choice anthropic-api-key";
-    case "openai": return "--auth-choice openai-api-key";
-    case "google": return "--auth-choice gemini-api-key";
-    case "mistral": return "--auth-choice mistral-api-key";
-    case "xai": return `--auth-choice custom-api-key --custom-base-url https://api.x.ai/v1 --custom-compatibility openai`;
-    case "deepseek": return `--auth-choice custom-api-key --custom-base-url https://api.deepseek.com/v1 --custom-compatibility openai`;
-    case "perplexity": return `--auth-choice custom-api-key --custom-base-url https://api.perplexity.ai --custom-compatibility openai`;
-    case "moonshot": return `--auth-choice custom-api-key --custom-base-url https://api.moonshot.ai/v1 --custom-compatibility openai`;
-    case "groq": return `--auth-choice custom-api-key --custom-base-url https://api.groq.com/openai/v1 --custom-compatibility openai`;
-    case "openrouter": return `--auth-choice custom-api-key --custom-base-url https://openrouter.ai/api/v1 --custom-compatibility openai`;
-    default: return "";
-  }
-}
-
-function buildEnvVars(ctx: SetupContext): Record<string, string> {
-  const env: Record<string, string> = {};
-  if (ctx.telegram) env.TELEGRAM_BOT_TOKEN = ctx.telegram.token;
-  if (ctx.model) {
-    switch (ctx.model.provider) {
-      case "anthropic": env.ANTHROPIC_API_KEY = ctx.model.apiKey; break;
-      case "openai": env.OPENAI_API_KEY = ctx.model.apiKey; break;
-      case "google": env.GEMINI_API_KEY = ctx.model.apiKey; break;
-      case "mistral": env.MISTRAL_API_KEY = ctx.model.apiKey; break;
-      default: env.CUSTOM_API_KEY = ctx.model.apiKey; break;
-    }
-  }
-  return env;
 }
