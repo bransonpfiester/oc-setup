@@ -50,6 +50,10 @@ function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
     ctx.agentName = cfg.name;
   }
 
+  if (cfg.userId) {
+    ctx.telegramUserId = cfg.userId;
+  }
+
   if (cfg.token) {
     ctx.telegram = { token: cfg.token, botUsername: "" };
   }

@@ -5,6 +5,7 @@ export interface SetupContext {
   userName: string;
   agentName: string;
   timezone: string;
+  telegramUserId: string;
   telegram: { token: string; botUsername: string } | null;
   model: { provider: string; apiKey: string; modelId: string } | null;
   personality: { description: string; focusAreas: string[] };
@@ -21,6 +22,7 @@ export function createContext(): SetupContext {
     userName: "",
     agentName: "",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    telegramUserId: "",
     telegram: null,
     model: null,
     personality: { description: "", focusAreas: [] },
