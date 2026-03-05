@@ -4,7 +4,7 @@ import { createContext, type SetupContext } from "../steps/context.js";
 import { detectOS } from "../steps/detect-os.js";
 import { checkNode } from "../steps/install-node.js";
 import { installOpenClaw } from "../steps/install-openclaw.js";
-import { setupTelegram } from "../steps/setup-telegram.js";
+import { collectTelegramInputs, configureTelegram } from "../steps/setup-telegram.js";
 import { setupModel } from "../steps/setup-model.js";
 import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
@@ -100,14 +100,24 @@ export async function initCommand(configPayload?: string): Promise<void> {
   }
 
   const steps: { name: string; fn: () => Promise<void> }[] = [
+    // Phase 1: Prerequisites
     { name: "OS Detection", fn: () => detectOS(ctx) },
     { name: "Node.js Check", fn: () => checkNode(ctx) },
     { name: "OpenClaw Install", fn: () => installOpenClaw(ctx) },
-    { name: "Telegram Setup", fn: () => setupTelegram(ctx) },
+
+    // Phase 2: Collect all user inputs
+    { name: "Telegram Credentials", fn: () => collectTelegramInputs(ctx) },
     { name: "AI Model", fn: () => setupModel(ctx) },
     { name: "Agent Personality", fn: () => setupPersonality(ctx) },
+
+    // Phase 3: Run OpenClaw onboarding (bootstraps gateway, workspace, daemon)
+    { name: "OpenClaw Onboarding", fn: () => setupGateway(ctx) },
+
+    // Phase 4: Configure Telegram AFTER onboarding (writes allowFrom, restarts gateway)
+    { name: "Telegram Channel", fn: () => configureTelegram(ctx) },
+
+    // Phase 5: Post-setup
     { name: "ClawHub + Skills", fn: () => installClawHub(ctx) },
-    { name: "Gateway", fn: () => setupGateway(ctx) },
     { name: "Auto-Start", fn: () => setupService(ctx) },
     { name: "Verification", fn: () => verify(ctx) },
   ];
