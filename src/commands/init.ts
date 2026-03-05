@@ -9,7 +9,6 @@ import { setupModel } from "../steps/setup-model.js";
 import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
 import { setupService } from "../steps/setup-service.js";
-import { installClawHub } from "../steps/install-clawhub.js";
 import { verify } from "../steps/verify.js";
 import { getPreset } from "../lib/templates.js";
 import { MODEL_PROVIDERS } from "../lib/models.js";
@@ -117,7 +116,6 @@ export async function initCommand(configPayload?: string): Promise<void> {
     { name: "Telegram Channel", fn: () => configureTelegram(ctx) },
 
     // Phase 5: Post-setup
-    { name: "ClawHub + Skills", fn: () => installClawHub(ctx) },
     { name: "Auto-Start", fn: () => setupService(ctx) },
     { name: "Verification", fn: () => verify(ctx) },
   ];

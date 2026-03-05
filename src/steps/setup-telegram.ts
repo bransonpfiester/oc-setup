@@ -30,16 +30,41 @@ export async function configureTelegram(ctx: SetupContext): Promise<void> {
   const s = p.spinner();
   s.start("Restarting gateway to apply Telegram config...");
 
-  const result = await runShell("openclaw gateway restart", { timeout: 30_000 });
+  // Try restart first
+  let restarted = false;
+  const restartResult = await runShell("openclaw gateway restart 2>&1", { timeout: 30_000 });
+  logger.info(`gateway restart exit=${restartResult.exitCode} stdout=${restartResult.stdout} stderr=${restartResult.stderr}`);
 
-  if (result.exitCode === 0) {
-    s.stop("Gateway restarted with Telegram enabled");
+  if (restartResult.exitCode === 0) {
+    restarted = true;
   } else {
-    s.stop("Gateway restart skipped");
-    p.log.info("Restart manually if needed: openclaw gateway restart");
+    // Try stop then start
+    await runShell("openclaw gateway stop 2>&1", { timeout: 15_000 });
+    const startResult = await runShell("openclaw gateway start 2>&1", { timeout: 30_000 });
+    logger.info(`gateway start exit=${startResult.exitCode} stdout=${startResult.stdout} stderr=${startResult.stderr}`);
+
+    if (startResult.exitCode === 0) {
+      restarted = true;
+    } else {
+      // Try launchctl directly on macOS
+      const launchResult = await runShell(
+        "launchctl kickstart -k gui/$(id -u)/ai.openclaw.gateway 2>&1 || launchctl kickstart -k gui/$(id -u)/com.openclaw.gateway 2>&1",
+        { timeout: 15_000 },
+      );
+      logger.info(`launchctl kickstart exit=${launchResult.exitCode}`);
+      if (launchResult.exitCode === 0) restarted = true;
+    }
   }
 
-  logger.info("Telegram channel configured and gateway restarted");
+  if (restarted) {
+    s.stop("Gateway restarted with Telegram enabled");
+  } else {
+    s.stop("Could not restart gateway");
+    p.log.warn("Restart the gateway manually for Telegram to work:");
+    p.log.info("  openclaw gateway stop && openclaw gateway start");
+  }
+
+  logger.info(`Telegram configured, gateway restart success=${restarted}`);
 }
 
 async function collectUserId(ctx: SetupContext): Promise<void> {
