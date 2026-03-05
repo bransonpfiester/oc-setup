@@ -1,10 +1,10 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { createContext, type SetupContext } from "../steps/context.js";
+import { createContext, type SetupContext, type Channel } from "../steps/context.js";
 import { detectOS } from "../steps/detect-os.js";
 import { checkNode } from "../steps/install-node.js";
 import { installOpenClaw } from "../steps/install-openclaw.js";
-import { collectTelegramInputs, configureTelegram } from "../steps/setup-telegram.js";
+import { collectChannelInputs, configureChannel } from "../steps/setup-channel.js";
 import { setupModel } from "../steps/setup-model.js";
 import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
@@ -26,6 +26,7 @@ const BANNER = `
 
 interface ConfigPayload {
   name?: string;
+  channel?: string;
   userId?: string;
   token?: string;
   provider?: string;
@@ -51,12 +52,20 @@ function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
     ctx.agentName = cfg.name;
   }
 
+  if (cfg.channel) {
+    ctx.channel = cfg.channel as Channel;
+  }
+
   if (cfg.userId) {
     ctx.telegramUserId = cfg.userId;
   }
 
-  if (cfg.token) {
+  if (cfg.token && (cfg.channel === "telegram" || !cfg.channel)) {
     ctx.telegram = { token: cfg.token, botUsername: "" };
+  }
+
+  if (cfg.token && cfg.channel === "discord") {
+    ctx.discord = { token: cfg.token };
   }
 
   const method = cfg.authMethod || "api-key";
@@ -113,7 +122,7 @@ export async function initCommand(configPayload?: string, demoMode?: boolean): P
     { name: "OpenClaw Install", fn: () => installOpenClaw(ctx) },
 
     // Phase 2: Collect all user inputs
-    { name: "Telegram Credentials", fn: () => collectTelegramInputs(ctx) },
+    { name: "Channel Setup", fn: () => collectChannelInputs(ctx) },
     { name: "AI Model", fn: () => setupModel(ctx) },
     { name: "Agent Personality", fn: () => setupPersonality(ctx) },
 
@@ -122,7 +131,7 @@ export async function initCommand(configPayload?: string, demoMode?: boolean): P
       ? [{ name: "Direct Setup", fn: () => setupDirect(ctx) }]
       : [
           { name: "OpenClaw Onboarding", fn: () => setupGateway(ctx) },
-          { name: "Telegram Channel", fn: () => configureTelegram(ctx) },
+          { name: "Channel Config", fn: () => configureChannel(ctx) },
         ]
     ),
 
@@ -142,20 +151,18 @@ export async function initCommand(configPayload?: string, demoMode?: boolean): P
     }
   }
 
-  const botHandle = ctx.telegram
-    ? `@${ctx.telegram.botUsername}`
-    : "your bot";
+  const channelHint = getChannelHint(ctx);
 
   console.log("");
   console.log(pc.bold(pc.green("══════════════════════════════════════════")));
   console.log(pc.bold(pc.green(" Your AI agent is LIVE!")));
   console.log("");
-  console.log(pc.bold(` Send a message to ${botHandle} on Telegram.`));
+  console.log(pc.bold(` ${channelHint}`));
   console.log("");
   console.log(pc.dim(" Useful commands:"));
   console.log(pc.dim("   openclaw status          — check everything's running"));
   console.log(pc.dim("   openclaw gateway restart  — restart if issues"));
-  console.log(pc.dim("   oc-setup doctor           — diagnose problems"));
+  console.log(pc.dim("   setupclaw doctor          — diagnose problems"));
   console.log("");
   console.log(pc.dim(` Dashboard: http://localhost:${ctx.gatewayPort}`));
   console.log(pc.bold(pc.green("══════════════════════════════════════════")));
@@ -163,4 +170,29 @@ export async function initCommand(configPayload?: string, demoMode?: boolean): P
 
   p.outro("Setup complete!");
   logger.info("Setup completed successfully");
+}
+
+function getChannelHint(ctx: SetupContext): string {
+  switch (ctx.channel) {
+    case "telegram":
+      return ctx.telegram
+        ? `Send a message to @${ctx.telegram.botUsername} on Telegram.`
+        : "Send a message to your bot on Telegram.";
+    case "whatsapp":
+      return "Send a message to your linked WhatsApp number.";
+    case "discord":
+      return "Send a message to your bot in Discord.";
+    case "signal":
+      return "Send a message to your agent on Signal.";
+    case "imessage":
+      return "Send a message via iMessage.";
+    case "googlechat":
+      return "Send a message in Google Chat.";
+    case "mattermost":
+      return "Send a message to your bot in Mattermost.";
+    case "webchat":
+      return `Open http://localhost:${ctx.gatewayPort} in your browser.`;
+    default:
+      return "Your agent is ready.";
+  }
 }
