@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — oc-setup</title>
+  <meta name="description" content="Full documentation for oc-setup: setup guide, commands, allowed senders, troubleshooting, and uninstalling.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><span class="brand-icon">&#129438;</span> oc-setup</a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/documentation.html" class="nav-active">Docs</a>
+        <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a>
+        <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <nav class="docs-nav">
+        <h4>Getting Started</h4>
+        <a href="#setup-guide">Setup Guide</a>
+        <a href="#requirements">Requirements</a>
+        <a href="#telegram-user-id">Telegram User ID</a>
+        <a href="#telegram-bot">Telegram Bot Token</a>
+        <a href="#api-key">API Key</a>
+        <h4>Commands</h4>
+        <a href="#cmd-init">oc-setup init</a>
+        <a href="#cmd-doctor">oc-setup doctor</a>
+        <a href="#cmd-update">oc-setup update</a>
+        <a href="#cmd-reset">oc-setup reset</a>
+        <a href="#cmd-add">oc-setup add</a>
+        <h4>Configuration</h4>
+        <a href="#allowed-senders">Allowed Senders</a>
+        <a href="#skills">Installing Skills</a>
+        <a href="#models">Changing Models</a>
+        <h4>Troubleshooting</h4>
+        <a href="#common-issues">Common Issues</a>
+        <a href="#uninstalling">Uninstalling</a>
+        <a href="#platform-support">Platform Support</a>
+      </nav>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Documentation</h1>
+
+      <section id="setup-guide">
+        <h2>Setup Guide</h2>
+        <p>Before you run <code>oc-setup</code>, you need three things: your Telegram user ID, a Telegram bot token, and an API key from an AI provider. This guide walks you through getting each one.</p>
+      </section>
+
+      <section id="requirements">
+        <h2>Requirements</h2>
+        <ul>
+          <li><strong>Node.js 18 or later</strong> — check with <code>node -v</code>. If you don't have it, <code>oc-setup</code> will tell you how to install it.</li>
+          <li><strong>A Telegram account</strong> — for creating your bot and getting your user ID.</li>
+          <li><strong>An API key</strong> — from any supported provider (Anthropic, OpenAI, Google, xAI, DeepSeek, Mistral, Perplexity, Kimi, Groq, or OpenRouter).</li>
+        </ul>
+      </section>
+
+      <section id="telegram-user-id">
+        <h2>Finding Your Telegram User ID</h2>
+        <p>Your user ID is a number that identifies your Telegram account. OpenClaw needs it to make sure only you can talk to your bot.</p>
+        <ol>
+          <li>Open Telegram</li>
+          <li>Search for <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> and start a chat</li>
+          <li>Send any message — it will reply with your user ID</li>
+          <li>Copy the number (e.g. <code>123456789</code>)</li>
+        </ol>
+        <p>This ID gets added to your OpenClaw config as an "allowed sender" so only you can message your bot. See <a href="#allowed-senders">Allowed Senders</a> for more details.</p>
+      </section>
+
+      <section id="telegram-bot">
+        <h2>Creating a Telegram Bot Token</h2>
+        <ol>
+          <li>Open Telegram and search for <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a></li>
+          <li>Send <code>/newbot</code></li>
+          <li>Choose a display name for your bot (e.g. "John's AI")</li>
+          <li>Choose a username ending in <code>bot</code> (e.g. <code>johns_ai_bot</code>)</li>
+          <li>BotFather will send you a token like <code>7891234567:AAH...</code></li>
+          <li>Copy the full token</li>
+        </ol>
+        <div class="docs-warning">Keep your bot token secret. Anyone with it can control your bot. If it leaks, message @BotFather and send <code>/revoke</code> to get a new one.</div>
+      </section>
+
+      <section id="api-key">
+        <h2>Getting an API Key</h2>
+        <p>You need an API key from whichever AI provider you want your agent to use. Here's where to get one:</p>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Provider</th><th>Get Key</th><th>Pricing</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Anthropic (Claude)</td><td><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></td><td>~$3-15/MTok</td></tr>
+            <tr><td>OpenAI</td><td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></td><td>Varies by model</td></tr>
+            <tr><td>Google Gemini</td><td><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a></td><td>Free tier available</td></tr>
+            <tr><td>xAI (Grok)</td><td><a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a></td><td>$0.20-15/MTok</td></tr>
+            <tr><td>DeepSeek</td><td><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a></td><td>Very cheap</td></tr>
+            <tr><td>Mistral</td><td><a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a></td><td>Varies by model</td></tr>
+            <tr><td>Perplexity</td><td><a href="https://www.perplexity.ai/settings/api" target="_blank" rel="noopener">perplexity.ai/settings</a></td><td>$1-15/MTok</td></tr>
+            <tr><td>Groq</td><td><a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></td><td>Free tier, fast</td></tr>
+            <tr><td>OpenRouter</td><td><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></td><td>Pay-per-use, 400+ models</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="cmd-init">
+        <h2><code>oc-setup</code> / <code>oc-setup init</code></h2>
+        <p>The main command. Runs the full guided setup flow:</p>
+        <ol>
+          <li>Detects your OS and verifies Node.js</li>
+          <li>Installs or updates OpenClaw globally</li>
+          <li>Prompts for your Telegram bot token and validates it</li>
+          <li>Prompts for your AI provider API key and validates it</li>
+          <li>Generates SOUL.md, USER.md, and HEARTBEAT.md from your preferences</li>
+          <li>Starts the gateway and configures auto-start on boot</li>
+          <li>Runs verification to confirm everything is working</li>
+        </ol>
+        <p>Idempotent — safe to run again if something failed. It skips steps that are already complete.</p>
+        <h3>Quick Setup (skip prompts)</h3>
+        <p>Use the <a href="/#quick-setup">Quick Setup form</a> on the homepage to generate a command with everything pre-filled:</p>
+        <pre><code>npx oc-setup --config &lt;base64-payload&gt;</code></pre>
+      </section>
+
+      <section id="cmd-doctor">
+        <h2><code>oc-setup doctor</code></h2>
+        <p>Runs health checks and tells you exactly what's wrong and how to fix it:</p>
+        <pre><code>oc-setup doctor
+
+ ✓ Node.js      v22.1.0 (OK)
+ ✓ OpenClaw     v2026.3.2 (OK)
+ ✗ Gateway      NOT RUNNING
+   → Fix: openclaw gateway start
+ ✓ Telegram     connected
+ ✗ API key      expired
+   → Fix: openclaw config set model.apiKey "sk-ant-new..."
+ ✓ Disk         42GB free (OK)</code></pre>
+        <p>Checks: Node.js version, OpenClaw installed, gateway running, Telegram connected, API key valid, disk space, config file, auto-start service.</p>
+      </section>
+
+      <section id="cmd-update">
+        <h2><code>oc-setup update</code></h2>
+        <p>Updates OpenClaw to the latest version. Preserves your config and restarts the gateway automatically.</p>
+      </section>
+
+      <section id="cmd-reset">
+        <h2><code>oc-setup reset</code></h2>
+        <p>Nuclear option. Backs up your current config to <code>~/.openclaw-backup-&lt;timestamp&gt;/</code>, wipes everything, and re-runs the full setup from scratch.</p>
+      </section>
+
+      <section id="cmd-add">
+        <h2><code>oc-setup add &lt;channel&gt;</code></h2>
+        <p>Add additional messaging channels. Coming in v2:</p>
+        <ul>
+          <li><code>oc-setup add discord</code></li>
+          <li><code>oc-setup add imessage</code></li>
+          <li><code>oc-setup add whatsapp</code></li>
+        </ul>
+      </section>
+
+      <section id="allowed-senders">
+        <h2>Allowed Senders</h2>
+        <p>OpenClaw uses your Telegram user ID to restrict who can talk to your bot. Without this, anyone who finds your bot could send it commands.</p>
+        <p>During setup, your user ID is added to the <code>allowFrom</code> list in <code>~/.openclaw/openclaw.json</code>:</p>
+        <pre><code>{
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "your-bot-token",
+      "dmPolicy": "allowlist",
+      "allowFrom": ["123456789"]
+    }
+  }
+}</code></pre>
+        <p>Only user IDs in <code>allowFrom</code> can message your bot. Everyone else is ignored.</p>
+        <h3>Adding more allowed senders</h3>
+        <p>To let another person talk to your bot:</p>
+        <pre><code>openclaw config set channels.telegram.allowFrom '["123456789", "987654321"]'</code></pre>
+        <p>Or edit <code>~/.openclaw/openclaw.json</code> directly and restart the gateway with <code>openclaw gateway restart</code>.</p>
+      </section>
+
+      <section id="skills">
+        <h2>Installing Skills</h2>
+        <p>Skills are extensions that teach your agent new capabilities. Browse 3,000+ skills at <a href="https://clawhub.com" target="_blank" rel="noopener">clawhub.com</a>.</p>
+        <h3>Install the ClawHub CLI</h3>
+        <pre><code>npm install -g clawhub</code></pre>
+        <h3>Common commands</h3>
+        <pre><code>clawhub search "calendar"       # search for skills
+clawhub install gog              # install a skill
+clawhub update --all             # update all installed skills</code></pre>
+        <h3>Popular skills</h3>
+        <table class="docs-table">
+          <thead><tr><th>Skill</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>gog</code></td><td>Google Workspace (Gmail, Calendar, Drive, Contacts)</td></tr>
+            <tr><td><code>agent-browser</code></td><td>Web browsing and automation</td></tr>
+            <tr><td><code>summarize</code></td><td>Content summarization</td></tr>
+            <tr><td><code>github</code></td><td>GitHub PRs, issues, repos</td></tr>
+            <tr><td><code>capability-evolver</code></td><td>Agent self-improvement</td></tr>
+            <tr><td><code>peekaboo</code></td><td>Screenshot and visual AI</td></tr>
+            <tr><td><code>nano-banana-pro</code></td><td>Image generation via Gemini</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="models">
+        <h2>Changing Models</h2>
+        <p>To switch your AI model after setup, edit your config:</p>
+        <pre><code>openclaw config set model.provider "anthropic"
+openclaw config set model.modelId "claude-opus-4-6"
+openclaw gateway restart</code></pre>
+        <p>Or edit <code>~/.openclaw/openclaw.json</code> directly under the <code>model</code> section.</p>
+      </section>
+
+      <section id="common-issues">
+        <h2>Common Issues</h2>
+
+        <h3>Gateway won't start</h3>
+        <pre><code>openclaw gateway start
+# If port is in use:
+lsof -i :18789
+kill &lt;PID&gt;
+openclaw gateway start</code></pre>
+
+        <h3>Telegram bot not responding</h3>
+        <ul>
+          <li>Check the token is valid: <code>oc-setup doctor</code></li>
+          <li>Make sure your user ID is in <code>allowFrom</code></li>
+          <li>Restart the gateway: <code>openclaw gateway restart</code></li>
+        </ul>
+
+        <h3>API key expired or invalid</h3>
+        <pre><code>openclaw config set model.apiKey "your-new-key"
+openclaw gateway restart</code></pre>
+
+        <h3>Node.js too old</h3>
+        <p>OpenClaw requires Node.js 18+. Update with:</p>
+        <pre><code># macOS
+brew install node
+
+# Linux
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs</code></pre>
+
+        <h3>"openclaw: command not found"</h3>
+        <pre><code>npm install -g openclaw</code></pre>
+      </section>
+
+      <section id="uninstalling">
+        <h2>Uninstalling</h2>
+
+        <h3>Quick uninstall (keeps your data)</h3>
+        <pre><code>npm uninstall -g openclaw
+npm uninstall -g oc-setup</code></pre>
+
+        <h3>Full uninstall (removes everything)</h3>
+        <p><strong>1. Stop the gateway and remove auto-start:</strong></p>
+        <p>macOS:</p>
+        <pre><code>openclaw gateway stop
+launchctl unload ~/Library/LaunchAgents/com.openclaw.gateway.plist
+rm ~/Library/LaunchAgents/com.openclaw.gateway.plist</code></pre>
+        <p>Linux:</p>
+        <pre><code>openclaw gateway stop
+systemctl --user disable openclaw-gateway.service
+rm ~/.config/systemd/user/openclaw-gateway.service
+systemctl --user daemon-reload</code></pre>
+        <p><strong>2. Remove packages:</strong></p>
+        <pre><code>npm uninstall -g openclaw
+npm uninstall -g oc-setup</code></pre>
+        <p><strong>3. Remove all data and config:</strong></p>
+        <pre><code>rm -rf ~/.openclaw</code></pre>
+        <div class="docs-warning">This deletes your config, SOUL.md, USER.md, HEARTBEAT.md, logs, and all agent memory. Back up <code>~/.openclaw</code> first if you want to keep anything.</div>
+      </section>
+
+      <section id="platform-support">
+        <h2>Platform Support</h2>
+        <table class="docs-table">
+          <thead>
+            <tr><th>Platform</th><th>Install Method</th><th>Service Manager</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>macOS (arm64)</td><td>Homebrew + npm</td><td>launchd (plist)</td><td>Primary</td></tr>
+            <tr><td>macOS (x64)</td><td>Homebrew + npm</td><td>launchd (plist)</td><td>Supported</td></tr>
+            <tr><td>Ubuntu 22/24</td><td>apt + npm</td><td>systemd (unit)</td><td>Supported</td></tr>
+            <tr><td>Debian 12</td><td>apt + npm</td><td>systemd (unit)</td><td>Supported</td></tr>
+            <tr><td>Windows 10/11</td><td>winget + npm</td><td>Task Scheduler</td><td>Best-effort</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>oc-setup &middot; part of <a href="https://openclaw.ai" target="_blank" rel="noopener">OpenClaw</a></span>
+      <div class="footer-links">
+        <a href="https://openclaw.ai" target="_blank" rel="noopener">openclaw.ai</a>
+        <a href="https://github.com/bransonpfiester/oc-setup" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
