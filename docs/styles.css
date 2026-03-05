@@ -676,6 +676,56 @@ code {
   font-weight: 500;
 }
 
+/* Channel instructions */
+.channel-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.channel-instructions {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+}
+
+.channel-instructions p {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.channel-instructions p strong {
+  color: var(--text);
+}
+
+.channel-instructions ol {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+
+.channel-instructions li {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+
+.channel-instructions a {
+  color: var(--accent);
+}
+
+.channel-instructions code {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
 .skill-keys {
   display: flex;
   flex-direction: column;
