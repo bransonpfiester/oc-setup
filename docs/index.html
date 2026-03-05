@@ -87,7 +87,7 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
           </div>
           <div class="form-row">
-            <label for="qs-apikey">API key <span class="form-help">(Anthropic, OpenAI, or OpenRouter)</span></label>
+            <label for="qs-apikey">API key</label>
             <input type="password" id="qs-apikey" placeholder="sk-ant-..." required>
           </div>
 
@@ -97,7 +97,13 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
               <option value="auto">Auto-detect from key</option>
               <option value="anthropic">Anthropic</option>
               <option value="openai">OpenAI</option>
-              <option value="google">Google</option>
+              <option value="google">Google Gemini</option>
+              <option value="xai">xAI (Grok)</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="mistral">Mistral AI</option>
+              <option value="perplexity">Perplexity</option>
+              <option value="moonshot">Kimi / Moonshot</option>
+              <option value="groq">Groq</option>
               <option value="openrouter">OpenRouter (all models)</option>
             </select>
           </div>
@@ -106,9 +112,9 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             <label for="qs-model">Model</label>
             <select id="qs-model">
               <optgroup label="Anthropic" data-provider="anthropic">
-                <option value="claude-sonnet-4-6-20260201" selected>Claude Sonnet 4.6 — recommended, best balance</option>
-                <option value="claude-opus-4-6-20260201">Claude Opus 4.6 — most capable</option>
-                <option value="claude-haiku-4-5-20250514">Claude Haiku 4.5 — fast, cheap</option>
+                <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 — best balance ($3/$15)</option>
+                <option value="claude-opus-4-6">Claude Opus 4.6 — most capable ($5/$25)</option>
+                <option value="claude-haiku-4-5">Claude Haiku 4.5 — fast ($1/$5)</option>
               </optgroup>
               <optgroup label="OpenAI" data-provider="openai">
                 <option value="gpt-4.1">GPT-4.1 — latest flagship</option>
@@ -119,16 +125,54 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
                 <option value="o4-mini">o4 Mini — fast reasoning</option>
                 <option value="o3-mini">o3 Mini</option>
               </optgroup>
-              <optgroup label="Google" data-provider="google">
+              <optgroup label="Google Gemini" data-provider="google">
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro — advanced reasoning</option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast, great value</option>
                 <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite — cheapest</option>
+                <option value="gemini-3-flash">Gemini 3 Flash — latest gen</option>
               </optgroup>
-              <optgroup label="Open Source (via OpenRouter)" data-provider="openrouter">
+              <optgroup label="xAI (Grok)" data-provider="xai">
+                <option value="grok-4">Grok 4 — flagship ($3/$15)</option>
+                <option value="grok-4-fast-reasoning">Grok 4 Fast Reasoning — 2M context ($0.20/$0.50)</option>
+                <option value="grok-4-fast-non-reasoning">Grok 4 Fast — 2M context ($0.20/$0.50)</option>
+                <option value="grok-code-fast-1">Grok Code Fast — coding ($0.20/$1.50)</option>
+              </optgroup>
+              <optgroup label="DeepSeek" data-provider="deepseek">
+                <option value="deepseek-chat">DeepSeek V3.2 Chat — general, cheap</option>
+                <option value="deepseek-reasoner">DeepSeek V3.2 Reasoner — chain-of-thought</option>
+              </optgroup>
+              <optgroup label="Mistral AI" data-provider="mistral">
+                <option value="mistral-large-latest">Mistral Large 3 — flagship</option>
+                <option value="mistral-medium-latest">Mistral Medium 3.1 — balanced</option>
+                <option value="mistral-small-latest">Mistral Small 3.2 — fast</option>
+                <option value="devstral-latest">Devstral 2 — coding agent</option>
+                <option value="codestral-latest">Codestral — code generation</option>
+              </optgroup>
+              <optgroup label="Perplexity" data-provider="perplexity">
+                <option value="sonar-pro">Sonar Pro — best quality ($3/$15)</option>
+                <option value="sonar">Sonar — fast search ($1/$1)</option>
+                <option value="sonar-reasoning-pro">Sonar Reasoning Pro — deep research ($2/$8)</option>
+                <option value="sonar-deep-research">Sonar Deep Research ($2/$8)</option>
+              </optgroup>
+              <optgroup label="Kimi / Moonshot" data-provider="moonshot">
+                <option value="kimi-k2.5">Kimi K2.5 — flagship, 256K context</option>
+                <option value="kimi-k2-turbo-preview">Kimi K2 Turbo — fast</option>
+                <option value="kimi-k2-thinking-turbo">Kimi K2 Thinking — reasoning</option>
+              </optgroup>
+              <optgroup label="Groq (fast inference)" data-provider="groq">
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B — free, fast</option>
+                <option value="llama-3.1-8b-instant">Llama 3.1 8B — instant</option>
+                <option value="gemma2-9b-it">Gemma 2 9B — lightweight</option>
+              </optgroup>
+              <optgroup label="OpenRouter (400+ models)" data-provider="openrouter">
+                <option value="anthropic/claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                <option value="openai/gpt-4.1">GPT-4.1</option>
+                <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="x-ai/grok-4">Grok 4</option>
+                <option value="deepseek/deepseek-chat">DeepSeek V3.2</option>
                 <option value="meta-llama/llama-3.3-70b">Llama 3.3 70B — free</option>
-                <option value="deepseek/deepseek-v3.2">DeepSeek V3.2 — frontier-level, cheap</option>
-                <option value="mistralai/devstral-2">Devstral 2 — coding specialist</option>
-                <option value="qwen/qwen3-coder">Qwen3 Coder — code generation</option>
+                <option value="mistralai/devstral-2">Devstral 2</option>
+                <option value="qwen/qwen3-coder">Qwen3 Coder</option>
               </optgroup>
             </select>
           </div>
@@ -344,8 +388,12 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     function detectProvider(apiKey) {
       if (apiKey.startsWith('sk-ant-')) return 'anthropic';
       if (apiKey.startsWith('sk-or-')) return 'openrouter';
+      if (apiKey.startsWith('xai-')) return 'xai';
       if (apiKey.startsWith('sk-')) return 'openai';
       if (apiKey.startsWith('AIza')) return 'google';
+      if (apiKey.startsWith('pplx-')) return 'perplexity';
+      if (apiKey.startsWith('gsk_')) return 'groq';
+      if (apiKey.startsWith('sk-') && apiKey.length > 80) return 'moonshot';
       return 'openrouter';
     }
 
