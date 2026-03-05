@@ -1,6 +1,6 @@
 {
   "name": "oc-setup",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "description": "OpenClaw client setup CLI — zero to working AI agent in minutes",
   "type": "module",
   "bin": {

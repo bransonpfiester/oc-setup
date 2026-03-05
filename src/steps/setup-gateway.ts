@@ -47,39 +47,67 @@ function writeAuthProfile(ctx: SetupContext): void {
   const method = ctx.model.authMethod || "api-key";
   if (method !== "api-key") return;
 
-  const agentDir = join(homedir(), ".openclaw", "agents", "main", "agent");
-  const authFile = join(agentDir, "auth-profiles.json");
+  const providerName = getProviderName(ctx.model.provider);
+  const profileId = `${providerName}:default`;
 
-  try {
-    mkdirSync(agentDir, { recursive: true });
+  const authContent = JSON.stringify({
+    profiles: {
+      [profileId]: {
+        type: "api_key",
+        provider: providerName,
+        key: ctx.model.apiKey,
+      },
+    },
+  }, null, 2) + "\n";
 
-    let authData: Record<string, unknown> = {};
-    if (existsSync(authFile)) {
-      try {
-        authData = JSON.parse(readFileSync(authFile, "utf-8"));
-      } catch {
-        authData = {};
+  const paths = [
+    join(homedir(), ".openclaw", "agents", "main", "agent"),
+    join(homedir(), ".openclaw", "agent"),
+  ];
+
+  let wrote = false;
+  for (const dir of paths) {
+    try {
+      mkdirSync(dir, { recursive: true });
+      const authFile = join(dir, "auth-profiles.json");
+
+      let authData: Record<string, unknown> = {};
+      if (existsSync(authFile)) {
+        try { authData = JSON.parse(readFileSync(authFile, "utf-8")); } catch { authData = {}; }
       }
+
+      const profiles = (authData.profiles ?? {}) as Record<string, unknown>;
+      profiles[profileId] = {
+        type: "api_key",
+        provider: providerName,
+        key: ctx.model.apiKey,
+      };
+      authData.profiles = profiles;
+
+      writeFileSync(authFile, JSON.stringify(authData, null, 2) + "\n", "utf-8");
+      wrote = true;
+      logger.info(`Wrote auth profile to ${authFile}`);
+    } catch (err) {
+      logger.warn(`Could not write auth to ${dir}: ${err}`);
     }
+  }
 
-    const profiles = (authData.profiles ?? {}) as Record<string, unknown>;
-    const providerName = getProviderName(ctx.model.provider);
-    const profileId = `${providerName}:default`;
-
-    profiles[profileId] = {
-      type: "api_key",
-      provider: providerName,
-      key: ctx.model.apiKey,
-    };
-
-    authData.profiles = profiles;
-
-    writeFileSync(authFile, JSON.stringify(authData, null, 2) + "\n", "utf-8");
+  if (wrote) {
     p.log.success(`API key saved for ${ctx.model.provider}`);
-    logger.info(`Wrote auth profile: ${profileId}`);
-  } catch (err) {
-    p.log.warn(`Could not save API key: ${err}`);
-    logger.error(`Auth profile write failed: ${err}`);
+  } else {
+    p.log.warn("Could not save API key to auth-profiles.json");
+    p.log.info(`Set it manually: export ${getEnvVar(ctx.model.provider)}="${ctx.model.apiKey}"`);
+  }
+}
+
+function getEnvVar(provider: string): string {
+  switch (provider) {
+    case "anthropic": return "ANTHROPIC_API_KEY";
+    case "openai": return "OPENAI_API_KEY";
+    case "google": return "GEMINI_API_KEY";
+    case "xai": return "XAI_API_KEY";
+    case "mistral": return "MISTRAL_API_KEY";
+    default: return "CUSTOM_API_KEY";
   }
 }
 
