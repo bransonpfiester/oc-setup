@@ -1,11 +1,18 @@
 import * as p from "@clack/prompts";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { runShell, run, runInteractive } from "../utils/exec.js";
 import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
 
+const OPENCLAW_CONFIG = join(homedir(), ".openclaw", "openclaw.json");
+
 export async function setupGateway(ctx: SetupContext): Promise<void> {
   await runDoctorFix();
   await runOnboard(ctx);
+  writeAuthProfile(ctx);
+  writeDefaultModel(ctx);
   await installGatewayService();
   await startGateway(ctx);
 }
@@ -31,6 +38,96 @@ async function runOnboard(ctx: SetupContext): Promise<void> {
     p.log.warn("Onboarding had issues.");
     p.log.info("You can run manually: openclaw onboard");
     logger.warn(`onboard exit ${exitCode}`);
+  }
+}
+
+function writeAuthProfile(ctx: SetupContext): void {
+  if (!ctx.model || !ctx.model.apiKey) return;
+
+  const method = ctx.model.authMethod || "api-key";
+  if (method !== "api-key") return;
+
+  const agentDir = join(homedir(), ".openclaw", "agents", "main", "agent");
+  const authFile = join(agentDir, "auth-profiles.json");
+
+  try {
+    mkdirSync(agentDir, { recursive: true });
+
+    let authData: Record<string, unknown> = {};
+    if (existsSync(authFile)) {
+      try {
+        authData = JSON.parse(readFileSync(authFile, "utf-8"));
+      } catch {
+        authData = {};
+      }
+    }
+
+    const profiles = (authData.profiles ?? {}) as Record<string, unknown>;
+    const providerName = getProviderName(ctx.model.provider);
+    const profileId = `${providerName}:default`;
+
+    profiles[profileId] = {
+      type: "api_key",
+      provider: providerName,
+      key: ctx.model.apiKey,
+    };
+
+    authData.profiles = profiles;
+
+    writeFileSync(authFile, JSON.stringify(authData, null, 2) + "\n", "utf-8");
+    p.log.success(`API key saved for ${ctx.model.provider}`);
+    logger.info(`Wrote auth profile: ${profileId}`);
+  } catch (err) {
+    p.log.warn(`Could not save API key: ${err}`);
+    logger.error(`Auth profile write failed: ${err}`);
+  }
+}
+
+function writeDefaultModel(ctx: SetupContext): void {
+  if (!ctx.model) return;
+
+  try {
+    let ocConfig: Record<string, unknown> = {};
+    if (existsSync(OPENCLAW_CONFIG)) {
+      try {
+        ocConfig = JSON.parse(readFileSync(OPENCLAW_CONFIG, "utf-8"));
+      } catch {
+        ocConfig = {};
+      }
+    }
+
+    const agents = (ocConfig.agents ?? {}) as Record<string, unknown>;
+    const defaults = (agents.defaults ?? {}) as Record<string, unknown>;
+
+    const providerName = getProviderName(ctx.model.provider);
+    const modelRef = `${providerName}/${ctx.model.modelId}`;
+
+    defaults.model = modelRef;
+    agents.defaults = defaults;
+    ocConfig.agents = agents;
+
+    writeFileSync(OPENCLAW_CONFIG, JSON.stringify(ocConfig, null, 2) + "\n", "utf-8");
+    p.log.success(`Default model set to ${modelRef}`);
+    logger.info(`Wrote agents.defaults.model: ${modelRef}`);
+  } catch (err) {
+    p.log.warn(`Could not set default model: ${err}`);
+    logger.error(`Default model write failed: ${err}`);
+  }
+}
+
+function getProviderName(provider: string): string {
+  switch (provider) {
+    case "anthropic": return "anthropic";
+    case "openai": return "openai";
+    case "google": return "google-generative-ai";
+    case "xai": return "xai";
+    case "deepseek": return "deepseek";
+    case "mistral": return "mistral";
+    case "perplexity": return "perplexity";
+    case "moonshot": return "moonshot";
+    case "groq": return "groq";
+    case "openrouter": return "openrouter";
+    default: return provider;
   }
 }
 
