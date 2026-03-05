@@ -56,6 +56,35 @@ function buildOnboardArgs(ctx: SetupContext): string[] {
 
   if (!ctx.model) return args;
 
+  const method = ctx.model.authMethod || "api-key";
+
+  // Anthropic subscription methods
+  if (ctx.model.provider === "anthropic" && method === "oauth") {
+    args.push("--auth-choice", "anthropic-oauth");
+    return args;
+  }
+  if (ctx.model.provider === "anthropic" && method === "setup-token") {
+    args.push("--auth-choice", "anthropic-token");
+    // Setup token is passed interactively by onboard, remove --non-interactive
+    const niIdx = args.indexOf("--non-interactive");
+    if (niIdx !== -1) args.splice(niIdx, 1);
+    return args;
+  }
+
+  // OpenAI subscription methods
+  if (ctx.model.provider === "openai" && method === "codex-oauth") {
+    args.push("--auth-choice", "openai-code-oauth");
+    // OAuth needs browser, remove --non-interactive
+    const niIdx = args.indexOf("--non-interactive");
+    if (niIdx !== -1) args.splice(niIdx, 1);
+    return args;
+  }
+  if (ctx.model.provider === "openai" && method === "codex-reuse") {
+    args.push("--auth-choice", "openai-code-subscription");
+    return args;
+  }
+
+  // API key methods
   switch (ctx.model.provider) {
     case "anthropic":
       args.push("--auth-choice", "anthropic-api-key");

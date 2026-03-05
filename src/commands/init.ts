@@ -30,6 +30,7 @@ interface ConfigPayload {
   provider?: string;
   apiKey?: string;
   modelId?: string;
+  authMethod?: string;
   preset?: string;
   skills?: string[];
 }
@@ -57,12 +58,14 @@ function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
     ctx.telegram = { token: cfg.token, botUsername: "" };
   }
 
-  if (cfg.provider && cfg.apiKey) {
+  const method = cfg.authMethod || "api-key";
+  if (cfg.provider && (cfg.apiKey || method !== "api-key")) {
     const providerInfo = MODEL_PROVIDERS.find((m) => m.provider === cfg.provider);
     ctx.model = {
       provider: cfg.provider,
-      apiKey: cfg.apiKey,
+      apiKey: cfg.apiKey || "",
       modelId: cfg.modelId ?? providerInfo?.defaultModel ?? "",
+      authMethod: method,
     };
   }
 

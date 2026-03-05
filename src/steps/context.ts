@@ -7,7 +7,7 @@ export interface SetupContext {
   timezone: string;
   telegramUserId: string;
   telegram: { token: string; botUsername: string } | null;
-  model: { provider: string; apiKey: string; modelId: string } | null;
+  model: { provider: string; apiKey: string; modelId: string; authMethod: string } | null;
   personality: { description: string; focusAreas: string[] };
   skills: string[];
   gatewayPort: number;

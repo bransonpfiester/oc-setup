@@ -88,8 +88,24 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
             <input type="text" id="qs-token" placeholder="7891234567:AAHx..." required>
           </div>
           <div class="form-row">
+            <label for="qs-auth-method">Authentication method</label>
+            <select id="qs-auth-method" onchange="updateAuthMethod()">
+              <option value="api-key">API key (paste a key)</option>
+              <option value="setup-token">Anthropic setup token (Claude subscription)</option>
+              <option value="oauth">Anthropic OAuth (reuse Claude Code CLI login)</option>
+              <option value="codex-oauth">OpenAI Codex OAuth (opens browser)</option>
+              <option value="codex-reuse">OpenAI Codex CLI (reuse existing login)</option>
+            </select>
+          </div>
+
+          <div class="form-row" id="apikey-row">
             <label for="qs-apikey">API key</label>
-            <input type="password" id="qs-apikey" placeholder="sk-ant-..." required>
+            <input type="password" id="qs-apikey" placeholder="sk-ant-...">
+          </div>
+
+          <div class="form-row" id="setup-token-row" hidden>
+            <label for="qs-setup-token">Setup token <span class="form-help">Run <code>claude setup-token</code> to get one</span></label>
+            <input type="text" id="qs-setup-token" placeholder="clst_...">
           </div>
 
           <div class="form-row">
@@ -435,6 +451,26 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       return keys;
     }
 
+    function updateAuthMethod() {
+      const method = document.getElementById('qs-auth-method').value;
+      const apikeyRow = document.getElementById('apikey-row');
+      const tokenRow = document.getElementById('setup-token-row');
+
+      apikeyRow.hidden = method !== 'api-key';
+      tokenRow.hidden = method !== 'setup-token';
+
+      if (method === 'setup-token') {
+        document.getElementById('qs-provider').value = 'anthropic';
+        updateModelList();
+      } else if (method === 'oauth') {
+        document.getElementById('qs-provider').value = 'anthropic';
+        updateModelList();
+      } else if (method === 'codex-oauth' || method === 'codex-reuse') {
+        document.getElementById('qs-provider').value = 'openai';
+        updateModelList();
+      }
+    }
+
     function detectProvider(apiKey) {
       if (apiKey.startsWith('sk-ant-')) return 'anthropic';
       if (apiKey.startsWith('sk-or-')) return 'openrouter';
@@ -473,8 +509,19 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     function getFormData() {
       const userId = document.getElementById('qs-userid').value.trim();
       const token = document.getElementById('qs-token').value.trim();
-      const apiKey = document.getElementById('qs-apikey').value.trim();
-      if (!userId || !token || !apiKey) return null;
+      const authMethod = document.getElementById('qs-auth-method').value;
+
+      if (!userId || !token) return null;
+
+      let apiKey = '';
+      if (authMethod === 'api-key') {
+        apiKey = document.getElementById('qs-apikey').value.trim();
+        if (!apiKey) return null;
+      } else if (authMethod === 'setup-token') {
+        apiKey = document.getElementById('qs-setup-token').value.trim();
+        if (!apiKey) return null;
+      }
+
       const providerSel = document.getElementById('qs-provider').value;
       const provider = providerSel === 'auto' ? detectProvider(apiKey) : providerSel;
       const modelId = document.getElementById('qs-model').value;
@@ -482,7 +529,7 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
       const preset = document.getElementById('qs-preset').value;
       const skills = getSelectedSkills();
       const skillKeys = getSkillKeys();
-      const config = { userId, token, provider, apiKey, modelId, preset, skills };
+      const config = { userId, token, provider, apiKey, modelId, preset, skills, authMethod };
       if (name) config.name = name;
       if (Object.keys(skillKeys).length > 0) config.skillKeys = skillKeys;
       return config;
@@ -504,11 +551,23 @@ Send a message to <span class="t-highlight">@johns_ai_bot</span> on Telegram.
     function validateRequired() {
       const userId = document.getElementById('qs-userid').value.trim();
       const token = document.getElementById('qs-token').value.trim();
-      const apiKey = document.getElementById('qs-apikey').value.trim();
-      if (!userId || !token || !apiKey) {
-        showFeedback('Please fill in your Telegram user ID, bot token, and API key.');
+      const authMethod = document.getElementById('qs-auth-method').value;
+
+      if (!userId || !token) {
+        showFeedback('Please fill in your Telegram user ID and bot token.');
         return false;
       }
+
+      if (authMethod === 'api-key' && !document.getElementById('qs-apikey').value.trim()) {
+        showFeedback('Please enter your API key.');
+        return false;
+      }
+
+      if (authMethod === 'setup-token' && !document.getElementById('qs-setup-token').value.trim()) {
+        showFeedback('Please enter your setup token (run: claude setup-token).');
+        return false;
+      }
+
       return true;
     }
 
