@@ -676,6 +676,14 @@ code {
   font-weight: 500;
 }
 
+.skill-checkbox .skill-desc {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
 .form-row input,
 .form-row select {
   background: var(--bg-card);
