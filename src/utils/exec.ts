@@ -36,13 +36,13 @@ export async function run(
 
 export async function runShell(
   command: string,
-  options: { timeout?: number; cwd?: string } = {},
+  options: { timeout?: number; cwd?: string; env?: Record<string, string> } = {},
 ): Promise<ExecResult> {
   try {
     const { stdout, stderr } = await execAsync(command, {
       timeout: options.timeout ?? DEFAULT_TIMEOUT_MS,
       cwd: options.cwd,
-      env: process.env,
+      env: { ...process.env, ...options.env },
     });
     return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode: 0 };
   } catch (err: unknown) {
