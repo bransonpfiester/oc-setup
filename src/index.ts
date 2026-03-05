@@ -20,7 +20,7 @@ function getVersion(): string {
 const program = new Command();
 
 program
-  .name("oc-setup")
+  .name("setupclaw")
   .description("OpenClaw client setup CLI")
   .version(getVersion());
 
@@ -28,9 +28,10 @@ program
   .command("init", { isDefault: true })
   .description("Full guided setup flow (default)")
   .option("--config <payload>", "Base64-encoded config to skip prompts")
-  .action(async (opts: { config?: string }) => {
+  .option("--demo", "Demo mode: skip onboarding wizard, write config directly")
+  .action(async (opts: { config?: string; demo?: boolean }) => {
     const { initCommand } = await import("./commands/init.js");
-    await initCommand(opts.config);
+    await initCommand(opts.config, opts.demo);
   });
 
 program

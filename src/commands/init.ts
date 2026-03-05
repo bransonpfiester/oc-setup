@@ -8,6 +8,7 @@ import { collectTelegramInputs, configureTelegram } from "../steps/setup-telegra
 import { setupModel } from "../steps/setup-model.js";
 import { setupPersonality } from "../steps/setup-personality.js";
 import { setupGateway } from "../steps/setup-gateway.js";
+import { setupDirect } from "../steps/setup-direct.js";
 import { setupService } from "../steps/setup-service.js";
 import { verify } from "../steps/verify.js";
 import { getPreset } from "../lib/templates.js";
@@ -82,7 +83,7 @@ function applyConfig(ctx: SetupContext, cfg: ConfigPayload): void {
   }
 }
 
-export async function initCommand(configPayload?: string): Promise<void> {
+export async function initCommand(configPayload?: string, demoMode?: boolean): Promise<void> {
   console.log(BANNER);
   p.intro(pc.bold("Welcome to OpenClaw Setup! Let's get your AI agent running."));
 
@@ -101,6 +102,10 @@ export async function initCommand(configPayload?: string): Promise<void> {
     }
   }
 
+  if (demoMode) {
+    p.log.info("Demo mode: skipping onboarding wizard, writing config directly.");
+  }
+
   const steps: { name: string; fn: () => Promise<void> }[] = [
     // Phase 1: Prerequisites
     { name: "OS Detection", fn: () => detectOS(ctx) },
@@ -112,13 +117,16 @@ export async function initCommand(configPayload?: string): Promise<void> {
     { name: "AI Model", fn: () => setupModel(ctx) },
     { name: "Agent Personality", fn: () => setupPersonality(ctx) },
 
-    // Phase 3: Run OpenClaw onboarding (bootstraps gateway, workspace, daemon)
-    { name: "OpenClaw Onboarding", fn: () => setupGateway(ctx) },
+    // Phase 3: Configure gateway
+    ...(demoMode
+      ? [{ name: "Direct Setup", fn: () => setupDirect(ctx) }]
+      : [
+          { name: "OpenClaw Onboarding", fn: () => setupGateway(ctx) },
+          { name: "Telegram Channel", fn: () => configureTelegram(ctx) },
+        ]
+    ),
 
-    // Phase 4: Configure Telegram AFTER onboarding (writes allowFrom, restarts gateway)
-    { name: "Telegram Channel", fn: () => configureTelegram(ctx) },
-
-    // Phase 5: Post-setup
+    // Phase 4: Post-setup
     { name: "Auto-Start", fn: () => setupService(ctx) },
     { name: "Verification", fn: () => verify(ctx) },
   ];
