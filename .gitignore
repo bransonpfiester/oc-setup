@@ -1,5 +1,12 @@
 node_modules/
 dist/
+admin/node_modules/
+app/node_modules/
+app/dist/
+app/.expo/
+web/node_modules/
+web/.next/
+docs/admin/
 .env
 .env.*
 *.log

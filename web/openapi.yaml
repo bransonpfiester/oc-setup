@@ -1,0 +1,3304 @@
+openapi: 3.1.0
+info:
+  title: OpenClaw API
+  version: 1.0.0
+  description: |
+    OpenClaw API provides a comprehensive interface for managing AI agent configurations,
+    monitoring sessions, executing commands, and analyzing usage across multiple LLM providers.
+
+    ## Authentication
+    All endpoints require a Bearer token in the Authorization header unless otherwise noted.
+    Health check endpoints are publicly accessible.
+
+    ## Rate Limiting
+    API requests are rate-limited to 500 requests per minute per API key.
+    Rate limit headers are included in every response.
+
+    ## Error Handling
+    All errors follow the standard ApiError envelope format with structured error codes.
+  contact:
+    name: OpenClaw Support
+    url: https://github.com/openclaw/setup
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api.openclaw.dev
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Stats
+    description: CRUD operations for usage and performance statistics
+  - name: Providers
+    description: AI provider management and API key validation
+  - name: Models
+    description: AI model listing and comparison
+  - name: Configs
+    description: Configuration generation, validation, and parsing
+  - name: Health
+    description: Service health, metrics, and dependency checks
+  - name: Users
+    description: User profile, preferences, and activity history
+  - name: Sessions
+    description: AI session management and replay
+  - name: Commands
+    description: CLI command execution and monitoring
+  - name: Webhooks
+    description: Webhook registration, management, and testing
+  - name: Analytics
+    description: Usage analytics across multiple time periods and dimensions
+
+paths:
+  # ──────────────────────────────────────────
+  # Stats Endpoints
+  # ──────────────────────────────────────────
+  /api/stats:
+    get:
+      operationId: listStats
+      summary: List all stats
+      description: Retrieve a paginated list of stats with optional filtering and sorting.
+      tags: [Stats]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/StatCategory"
+          description: Filter by stat category
+      responses:
+        "200":
+          description: Paginated list of stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseStatListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: createStat
+      summary: Create a new stat
+      description: Create a new stat entry with name, value, unit, and category.
+      tags: [Stats]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatCreate"
+      responses:
+        "201":
+          description: Stat created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseStat"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/stats/{id}:
+    get:
+      operationId: getStat
+      summary: Get stat by ID
+      description: Retrieve a single stat with its value history.
+      tags: [Stats]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Stat detail with history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseStatDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    put:
+      operationId: updateStat
+      summary: Update a stat
+      description: Partially update a stat. Only provided fields are modified.
+      tags: [Stats]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatUpdate"
+      responses:
+        "200":
+          description: Stat updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseStat"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      operationId: deleteStat
+      summary: Delete a stat
+      description: Permanently delete a stat and its history.
+      tags: [Stats]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Stat deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseDeleteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Provider Endpoints
+  # ──────────────────────────────────────────
+  /api/providers:
+    get:
+      operationId: listProviders
+      summary: List AI providers
+      description: Retrieve a paginated list of available AI providers.
+      tags: [Providers]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ProviderStatus"
+          description: Filter by provider status
+      responses:
+        "200":
+          description: Paginated list of providers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseProviderListResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/providers/{id}:
+    get:
+      operationId: getProvider
+      summary: Get provider details
+      description: Get detailed information about a provider including health status and usage.
+      tags: [Providers]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Provider details with health and usage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseProviderDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/providers/validate:
+    post:
+      operationId: validateProvider
+      summary: Validate provider API key
+      description: |
+        Validate an API key against a provider without making a model call.
+        Checks authentication, permissions, and remaining quota.
+      tags: [Providers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderValidateRequest"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseProviderValidateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Model Endpoints
+  # ──────────────────────────────────────────
+  /api/models:
+    get:
+      operationId: listModels
+      summary: List AI models
+      description: List available AI models with optional filtering by provider, type, and status.
+      tags: [Models]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: providerId
+          in: query
+          schema:
+            type: string
+          description: Filter by provider ID
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ModelType"
+          description: Filter by model type
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ModelStatus"
+          description: Filter by model status
+      responses:
+        "200":
+          description: Paginated list of models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseModelListResponse"
+        "404":
+          description: No models found for specified provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/models/compare:
+    post:
+      operationId: compareModels
+      summary: Compare AI models
+      description: |
+        Compare multiple models across specified metrics.
+        Returns scored comparisons and an optional best-fit recommendation.
+      tags: [Models]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelCompareRequest"
+      responses:
+        "200":
+          description: Model comparison results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseModelCompareResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Config Endpoints
+  # ──────────────────────────────────────────
+  /api/configs/generate:
+    post:
+      operationId: generateConfig
+      summary: Generate a configuration
+      description: Generate a complete configuration from a preset with optional parameter overrides.
+      tags: [Configs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigGenerateRequest"
+      responses:
+        "201":
+          description: Configuration generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseConfigGenerateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/configs/validate:
+    post:
+      operationId: validateConfig
+      summary: Validate a configuration
+      description: |
+        Validate a configuration object for correctness. Checks required fields,
+        value ranges, and provider/model compatibility. Returns errors, warnings,
+        and improvement suggestions.
+      tags: [Configs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigValidateRequest"
+      responses:
+        "200":
+          description: Validation results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseConfigValidateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/configs/parse:
+    post:
+      operationId: parseConfig
+      summary: Parse a configuration string
+      description: Parse a configuration from JSON, YAML, TOML, or ENV format into a structured Config object.
+      tags: [Configs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigParseRequest"
+      responses:
+        "200":
+          description: Parsed configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseConfigParseResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Health Endpoints
+  # ──────────────────────────────────────────
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns overall service health status with subsystem checks.
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseHealthStatus"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/health/metrics:
+    get:
+      operationId: getHealthMetrics
+      summary: System metrics
+      description: Returns detailed system metrics including CPU, memory, request rates, errors, and latency percentiles.
+      tags: [Health]
+      responses:
+        "200":
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseHealthMetrics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/health/dependencies:
+    get:
+      operationId: getHealthDependencies
+      summary: Dependency health
+      description: Check health and connectivity of all external dependencies.
+      tags: [Health]
+      responses:
+        "200":
+          description: Dependency status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseHealthDependenciesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # User Endpoints
+  # ──────────────────────────────────────────
+  /api/users/profile:
+    get:
+      operationId: getUserProfile
+      summary: Get user profile
+      description: Retrieve the authenticated user's profile and aggregate usage statistics.
+      tags: [Users]
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/users/preferences:
+    get:
+      operationId: getUserPreferences
+      summary: Get user preferences
+      description: Retrieve the authenticated user's preferences.
+      tags: [Users]
+      responses:
+        "200":
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserPreferences"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    put:
+      operationId: updateUserPreferences
+      summary: Update user preferences
+      description: Update user preferences. Only fields present in the body are modified.
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPreferencesUpdate"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserPreferences"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/users/history:
+    get:
+      operationId: getUserHistory
+      summary: Get user activity history
+      description: Retrieve paginated activity history with optional type filtering.
+      tags: [Users]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/HistoryEventType"
+          description: Filter by event type
+      responses:
+        "200":
+          description: Paginated activity history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseUserHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Session Endpoints
+  # ──────────────────────────────────────────
+  /api/sessions:
+    get:
+      operationId: listSessions
+      summary: List sessions
+      description: List all sessions with pagination, sorting, and status filtering.
+      tags: [Sessions]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/SessionStatus"
+          description: Filter by session status
+      responses:
+        "200":
+          description: Paginated session list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseSessionListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/sessions/{id}:
+    get:
+      operationId: getSession
+      summary: Get session details
+      description: Get full session details including all events and a summary.
+      tags: [Sessions]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Session detail with events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseSessionDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/sessions/{id}/replay:
+    post:
+      operationId: replaySession
+      summary: Replay a session
+      description: Replay session events with configurable playback speed and start position.
+      tags: [Sessions]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionReplayRequest"
+      responses:
+        "200":
+          description: Replay events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseSessionReplayResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Command Endpoints
+  # ──────────────────────────────────────────
+  /api/commands/execute:
+    post:
+      operationId: executeCommand
+      summary: Execute a command
+      description: |
+        Execute a whitelisted CLI command asynchronously.
+        Returns a command ID for polling status and retrieving logs.
+      tags: [Commands]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommandExecuteRequest"
+      responses:
+        "202":
+          description: Command accepted for execution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommandExecuteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Command not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/commands/{id}/status:
+    get:
+      operationId: getCommandStatus
+      summary: Get command status
+      description: Poll the execution status of a submitted command.
+      tags: [Commands]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Command status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommandStatusResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/commands/{id}/logs:
+    get:
+      operationId: getCommandLogs
+      summary: Get command logs
+      description: Retrieve stdout/stderr logs for a command execution with pagination.
+      tags: [Commands]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: stream
+          in: query
+          schema:
+            type: string
+            enum: [stdout, stderr]
+          description: Filter by output stream
+      responses:
+        "200":
+          description: Command logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommandLogsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Webhook Endpoints
+  # ──────────────────────────────────────────
+  /api/webhooks:
+    get:
+      operationId: listWebhooks
+      summary: List webhooks
+      description: List all registered webhooks with pagination.
+      tags: [Webhooks]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/WebhookStatus"
+          description: Filter by webhook status
+      responses:
+        "200":
+          description: Paginated webhook list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseWebhookListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: registerWebhook
+      summary: Register a webhook
+      description: |
+        Register a new webhook endpoint. Generates a signing secret if not provided.
+        Supports custom headers and configurable retry policies.
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookRegisterRequest"
+      responses:
+        "201":
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseWebhook"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/webhooks/{id}:
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      description: Permanently delete a webhook registration and cancel pending deliveries.
+      tags: [Webhooks]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Webhook deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseDeleteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/webhooks/{id}/test:
+    post:
+      operationId: testWebhook
+      summary: Test a webhook
+      description: Send a test payload to a webhook endpoint to verify connectivity.
+      tags: [Webhooks]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Test delivery result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseWebhookTestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ──────────────────────────────────────────
+  # Analytics Endpoints
+  # ──────────────────────────────────────────
+  /api/analytics/daily:
+    get:
+      operationId: getAnalyticsDaily
+      summary: Daily analytics
+      description: Retrieve daily analytics data. Defaults to the last 30 days.
+      tags: [Analytics]
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+          description: Number of days to return
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start of date range
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End of date range
+      responses:
+        "200":
+          description: Daily analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsDailyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/analytics/weekly:
+    get:
+      operationId: getAnalyticsWeekly
+      summary: Weekly analytics
+      description: Retrieve weekly aggregated analytics. Defaults to the last 12 weeks.
+      tags: [Analytics]
+      parameters:
+        - name: weeks
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 52
+            default: 12
+          description: Number of weeks to return
+      responses:
+        "200":
+          description: Weekly analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsWeeklyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/analytics/monthly:
+    get:
+      operationId: getAnalyticsMonthly
+      summary: Monthly analytics
+      description: Retrieve monthly aggregated analytics with cost projections. Defaults to the last 12 months.
+      tags: [Analytics]
+      parameters:
+        - name: months
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 12
+          description: Number of months to return
+      responses:
+        "200":
+          description: Monthly analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsMonthlyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/analytics/by-language:
+    get:
+      operationId: getAnalyticsByLanguage
+      summary: Analytics by language
+      description: Usage analytics breakdown by language.
+      tags: [Analytics]
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Per-language analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsByLanguageResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/analytics/by-model:
+    get:
+      operationId: getAnalyticsByModel
+      summary: Analytics by model
+      description: Usage analytics broken down by AI model.
+      tags: [Analytics]
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Per-model analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsByModelResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/analytics/trends:
+    get:
+      operationId: getAnalyticsTrends
+      summary: Analytics trends
+      description: Compute trend analysis across key metrics with actionable insights.
+      tags: [Analytics]
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 7
+            maximum: 90
+            default: 30
+          description: Number of days for the analysis period
+      responses:
+        "200":
+          description: Trend analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAnalyticsTrendsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+# ================================================================
+# Components
+# ================================================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from the auth service
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique resource identifier
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+    SortByParam:
+      name: sortBy
+      in: query
+      schema:
+        type: string
+        default: createdAt
+      description: Field to sort results by
+
+    SortOrderParam:
+      name: sortOrder
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+      description: Sort direction
+
+  responses:
+    BadRequest:
+      description: Validation or input error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              details:
+                issues:
+                  - path: name
+                    message: Required
+                    code: invalid_type
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            success: false
+            error:
+              code: UNAUTHORIZED
+              message: Authentication required
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            success: false
+            error:
+              code: INTERNAL_ERROR
+              message: An unexpected error occurred
+
+  schemas:
+    # ────────────────────────────────────────
+    # Common Schemas
+    # ────────────────────────────────────────
+    ApiError:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          const: false
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error description
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context
+
+    ResponseMeta:
+      type: object
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier for tracing
+          example: req_m1abc_xyz12345
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the response
+        duration:
+          type: number
+          description: Request processing time in milliseconds
+
+    Pagination:
+      type: object
+      required: [page, limit, total, totalPages, hasNext, hasPrevious]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+
+    DeleteResult:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          const: true
+        id:
+          type: string
+
+    DateRangeParams:
+      type: object
+      required: [startDate, endDate]
+      properties:
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+
+    # ────────────────────────────────────────
+    # Stat Schemas
+    # ────────────────────────────────────────
+    StatCategory:
+      type: string
+      enum: [performance, usage, cost, error, custom]
+
+    Stat:
+      type: object
+      required: [id, name, value, unit, category, tags, metadata, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          example: m1abc_xyz12345
+        name:
+          type: string
+          example: api_response_time
+        value:
+          type: number
+          example: 245.5
+        unit:
+          type: string
+          example: ms
+        category:
+          $ref: "#/components/schemas/StatCategory"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["api", "latency"]
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    StatCreate:
+      type: object
+      required: [name, value, unit, category]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        value:
+          type: number
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 50
+        category:
+          $ref: "#/components/schemas/StatCategory"
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 20
+          default: []
+        metadata:
+          type: object
+          additionalProperties: true
+          default: {}
+
+    StatUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        value:
+          type: number
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 50
+        category:
+          $ref: "#/components/schemas/StatCategory"
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        metadata:
+          type: object
+          additionalProperties: true
+
+    StatHistoryPoint:
+      type: object
+      required: [value, timestamp]
+      properties:
+        value:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    StatDetailResponse:
+      type: object
+      required: [stat, history]
+      properties:
+        stat:
+          $ref: "#/components/schemas/Stat"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatHistoryPoint"
+
+    StatListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stat"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # ────────────────────────────────────────
+    # Provider Schemas
+    # ────────────────────────────────────────
+    ProviderAuthType:
+      type: string
+      enum: [api_key, oauth2, bearer, none]
+
+    ProviderStatus:
+      type: string
+      enum: [active, degraded, down, maintenance]
+
+    RateLimitConfig:
+      type: object
+      required: [requestsPerMinute, tokensPerMinute, concurrentRequests]
+      properties:
+        requestsPerMinute:
+          type: integer
+        tokensPerMinute:
+          type: integer
+        concurrentRequests:
+          type: integer
+
+    ProviderFeature:
+      type: object
+      required: [name, supported]
+      properties:
+        name:
+          type: string
+        supported:
+          type: boolean
+        version:
+          type: string
+
+    Provider:
+      type: object
+      required: [id, name, slug, description, baseUrl, authType, status, models, rateLimits, features, createdAt]
+      properties:
+        id:
+          type: string
+          example: openai
+        name:
+          type: string
+          example: OpenAI
+        slug:
+          type: string
+          example: openai
+        description:
+          type: string
+        baseUrl:
+          type: string
+          format: uri
+        authType:
+          $ref: "#/components/schemas/ProviderAuthType"
+        status:
+          $ref: "#/components/schemas/ProviderStatus"
+        models:
+          type: array
+          items:
+            type: string
+        rateLimits:
+          $ref: "#/components/schemas/RateLimitConfig"
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderFeature"
+        createdAt:
+          type: string
+          format: date-time
+
+    ProviderHealthInfo:
+      type: object
+      required: [status, latencyMs, lastChecked, uptime]
+      properties:
+        status:
+          $ref: "#/components/schemas/ProviderStatus"
+        latencyMs:
+          type: number
+        lastChecked:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          description: Uptime percentage
+
+    ProviderUsageInfo:
+      type: object
+      required: [totalRequests, totalTokens, totalCost, period]
+      properties:
+        totalRequests:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+        period:
+          type: string
+
+    ProviderListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Provider"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    ProviderDetailResponse:
+      type: object
+      required: [provider, health, usage]
+      properties:
+        provider:
+          $ref: "#/components/schemas/Provider"
+        health:
+          $ref: "#/components/schemas/ProviderHealthInfo"
+        usage:
+          $ref: "#/components/schemas/ProviderUsageInfo"
+
+    ProviderValidateRequest:
+      type: object
+      required: [providerId, apiKey]
+      properties:
+        providerId:
+          type: string
+          minLength: 1
+        apiKey:
+          type: string
+          minLength: 1
+
+    ProviderValidateResponse:
+      type: object
+      required: [valid, provider, permissions, quotaRemaining, expiresAt]
+      properties:
+        valid:
+          type: boolean
+        provider:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        quotaRemaining:
+          type: integer
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ────────────────────────────────────────
+    # Model Schemas
+    # ────────────────────────────────────────
+    ModelType:
+      type: string
+      enum: [chat, completion, embedding, image, audio, multimodal]
+
+    ModelCapability:
+      type: string
+      enum: [function_calling, vision, streaming, json_mode, system_prompt, fine_tuning, batch]
+
+    ModelStatus:
+      type: string
+      enum: [available, deprecated, preview, disabled]
+
+    Model:
+      type: object
+      required: [id, providerId, name, displayName, description, type, contextWindow, maxOutputTokens, inputPricePerToken, outputPricePerToken, capabilities, status, version, releasedAt]
+      properties:
+        id:
+          type: string
+          example: gpt-4o
+        providerId:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: "#/components/schemas/ModelType"
+        contextWindow:
+          type: integer
+          example: 128000
+        maxOutputTokens:
+          type: integer
+        inputPricePerToken:
+          type: number
+        outputPricePerToken:
+          type: number
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelCapability"
+        status:
+          $ref: "#/components/schemas/ModelStatus"
+        version:
+          type: string
+        releasedAt:
+          type: string
+          format: date-time
+
+    ComparisonMetric:
+      type: string
+      enum: [price, speed, quality, context, features]
+
+    ModelCompareRequest:
+      type: object
+      required: [modelIds]
+      properties:
+        modelIds:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 10
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComparisonMetric"
+          default: [price, speed, quality]
+
+    ModelBenchmark:
+      type: object
+      required: [name, score, maxScore, category]
+      properties:
+        name:
+          type: string
+        score:
+          type: number
+        maxScore:
+          type: number
+        category:
+          type: string
+
+    ModelComparison:
+      type: object
+      required: [model, scores, benchmarks]
+      properties:
+        model:
+          $ref: "#/components/schemas/Model"
+        scores:
+          type: object
+          additionalProperties:
+            type: number
+        benchmarks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelBenchmark"
+
+    ModelRecommendation:
+      type: object
+      required: [modelId, reason, confidence]
+      properties:
+        modelId:
+          type: string
+        reason:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      nullable: true
+
+    ModelCompareResponse:
+      type: object
+      required: [models, recommendation]
+      properties:
+        models:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelComparison"
+        recommendation:
+          $ref: "#/components/schemas/ModelRecommendation"
+
+    ModelListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Model"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # ────────────────────────────────────────
+    # Config Schemas
+    # ────────────────────────────────────────
+    ConfigPreset:
+      type: string
+      enum: [minimal, balanced, creative, precise, custom]
+
+    ConfigFormat:
+      type: string
+      enum: [yaml, json, toml, env]
+
+    ChannelType:
+      type: string
+      enum: [telegram, discord, slack, web, api]
+
+    ConfigParameters:
+      type: object
+      required: [temperature, maxTokens, topP, frequencyPenalty, presencePenalty, stopSequences]
+      properties:
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+        maxTokens:
+          type: integer
+          minimum: 1
+        topP:
+          type: number
+          minimum: 0
+          maximum: 1
+        frequencyPenalty:
+          type: number
+          minimum: -2
+          maximum: 2
+        presencePenalty:
+          type: number
+          minimum: -2
+          maximum: 2
+        stopSequences:
+          type: array
+          items:
+            type: string
+
+    PersonalityConfig:
+      type: object
+      required: [name, systemPrompt, traits, tone]
+      properties:
+        name:
+          type: string
+        systemPrompt:
+          type: string
+        traits:
+          type: array
+          items:
+            type: string
+        tone:
+          type: string
+
+    ChannelConfig:
+      type: object
+      required: [type, enabled, settings]
+      properties:
+        type:
+          $ref: "#/components/schemas/ChannelType"
+        enabled:
+          type: boolean
+        settings:
+          type: object
+          additionalProperties: true
+
+    GatewayConfig:
+      type: object
+      required: [host, port, tls, corsOrigins]
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+        tls:
+          type: boolean
+        corsOrigins:
+          type: array
+          items:
+            type: string
+
+    Config:
+      type: object
+      required: [id, name, version, providerId, modelId, parameters, personality, channels, gateway, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        providerId:
+          type: string
+        modelId:
+          type: string
+        parameters:
+          $ref: "#/components/schemas/ConfigParameters"
+        personality:
+          $ref: "#/components/schemas/PersonalityConfig"
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChannelConfig"
+        gateway:
+          $ref: "#/components/schemas/GatewayConfig"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ConfigWarning:
+      type: object
+      required: [field, message, severity]
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, error]
+
+    ConfigGenerateRequest:
+      type: object
+      required: [providerId, modelId]
+      properties:
+        providerId:
+          type: string
+          minLength: 1
+        modelId:
+          type: string
+          minLength: 1
+        preset:
+          $ref: "#/components/schemas/ConfigPreset"
+        overrides:
+          type: object
+          properties:
+            temperature:
+              type: number
+              minimum: 0
+              maximum: 2
+            maxTokens:
+              type: integer
+              minimum: 1
+            topP:
+              type: number
+              minimum: 0
+              maximum: 1
+            frequencyPenalty:
+              type: number
+            presencePenalty:
+              type: number
+            stopSequences:
+              type: array
+              items:
+                type: string
+
+    ConfigGenerateResponse:
+      type: object
+      required: [config, warnings]
+      properties:
+        config:
+          $ref: "#/components/schemas/Config"
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigWarning"
+
+    ConfigValidationError:
+      type: object
+      required: [path, message, code]
+      properties:
+        path:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        expected:
+          type: string
+        received:
+          type: string
+
+    ConfigSuggestion:
+      type: object
+      required: [field, currentValue, suggestedValue, reason]
+      properties:
+        field:
+          type: string
+        currentValue: {}
+        suggestedValue: {}
+        reason:
+          type: string
+
+    ConfigValidateRequest:
+      type: object
+      required: [config]
+      properties:
+        config:
+          type: object
+          additionalProperties: true
+        strict:
+          type: boolean
+          default: false
+
+    ConfigValidateResponse:
+      type: object
+      required: [valid, errors, warnings, suggestions]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigValidationError"
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigWarning"
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigSuggestion"
+
+    ConfigParseRequest:
+      type: object
+      required: [content, format]
+      properties:
+        content:
+          type: string
+          minLength: 1
+        format:
+          $ref: "#/components/schemas/ConfigFormat"
+
+    ConfigParseResponse:
+      type: object
+      required: [config, parseWarnings, originalFormat]
+      properties:
+        config:
+          $ref: "#/components/schemas/Config"
+        parseWarnings:
+          type: array
+          items:
+            type: string
+        originalFormat:
+          $ref: "#/components/schemas/ConfigFormat"
+
+    # ────────────────────────────────────────
+    # Health Schemas
+    # ────────────────────────────────────────
+    ServiceStatus:
+      type: string
+      enum: [healthy, degraded, unhealthy]
+
+    HealthCheck:
+      type: object
+      required: [name, status, latencyMs]
+      properties:
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/ServiceStatus"
+        latencyMs:
+          type: number
+        message:
+          type: string
+
+    HealthStatus:
+      type: object
+      required: [status, version, uptime, environment, checks]
+      properties:
+        status:
+          $ref: "#/components/schemas/ServiceStatus"
+        version:
+          type: string
+        uptime:
+          type: number
+          description: Uptime in seconds
+        environment:
+          type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
+
+    CpuMetrics:
+      type: object
+      required: [usage, cores, loadAverage]
+      properties:
+        usage:
+          type: number
+        cores:
+          type: integer
+        loadAverage:
+          type: array
+          items:
+            type: number
+
+    MemoryMetrics:
+      type: object
+      required: [used, total, percentage, heapUsed, heapTotal]
+      properties:
+        used:
+          type: integer
+        total:
+          type: integer
+        percentage:
+          type: number
+        heapUsed:
+          type: integer
+        heapTotal:
+          type: integer
+
+    RequestMetrics:
+      type: object
+      required: [total, perSecond, byMethod, byStatus]
+      properties:
+        total:
+          type: integer
+        perSecond:
+          type: number
+        byMethod:
+          type: object
+          additionalProperties:
+            type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+
+    RecentError:
+      type: object
+      required: [message, count, lastOccurred]
+      properties:
+        message:
+          type: string
+        count:
+          type: integer
+        lastOccurred:
+          type: string
+          format: date-time
+
+    ErrorMetrics:
+      type: object
+      required: [total, rate, byType, recent]
+      properties:
+        total:
+          type: integer
+        rate:
+          type: number
+        byType:
+          type: object
+          additionalProperties:
+            type: integer
+        recent:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentError"
+
+    LatencyMetrics:
+      type: object
+      required: [p50, p90, p95, p99, average]
+      properties:
+        p50:
+          type: number
+        p90:
+          type: number
+        p95:
+          type: number
+        p99:
+          type: number
+        average:
+          type: number
+
+    HealthMetrics:
+      type: object
+      required: [cpu, memory, requests, errors, latency]
+      properties:
+        cpu:
+          $ref: "#/components/schemas/CpuMetrics"
+        memory:
+          $ref: "#/components/schemas/MemoryMetrics"
+        requests:
+          $ref: "#/components/schemas/RequestMetrics"
+        errors:
+          $ref: "#/components/schemas/ErrorMetrics"
+        latency:
+          $ref: "#/components/schemas/LatencyMetrics"
+
+    DependencyType:
+      type: string
+      enum: [database, cache, queue, external_api, storage, service]
+
+    HealthDependency:
+      type: object
+      required: [name, type, status, latencyMs]
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/DependencyType"
+        status:
+          $ref: "#/components/schemas/ServiceStatus"
+        latencyMs:
+          type: number
+        version:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    HealthDependenciesResponse:
+      type: object
+      required: [dependencies, allHealthy]
+      properties:
+        dependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthDependency"
+        allHealthy:
+          type: boolean
+
+    # ────────────────────────────────────────
+    # User Schemas
+    # ────────────────────────────────────────
+    UserRole:
+      type: string
+      enum: [admin, member, viewer]
+
+    ThemePreference:
+      type: string
+      enum: [light, dark, system]
+
+    HistoryEventType:
+      type: string
+      enum: [session_start, session_end, command_execute, config_change, model_switch, webhook_create, error]
+
+    UserStats:
+      type: object
+      required: [totalSessions, totalCommands, totalTokensUsed, favoriteModel]
+      properties:
+        totalSessions:
+          type: integer
+        totalCommands:
+          type: integer
+        totalTokensUsed:
+          type: integer
+        favoriteModel:
+          type: string
+          nullable: true
+
+    UserProfile:
+      type: object
+      required: [id, email, displayName, avatarUrl, role, organization, createdAt, lastLoginAt, stats]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          $ref: "#/components/schemas/UserRole"
+        organization:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+        stats:
+          $ref: "#/components/schemas/UserStats"
+
+    NotificationPreferences:
+      type: object
+      required: [email, push, webhookAlerts, dailyDigest]
+      properties:
+        email:
+          type: boolean
+        push:
+          type: boolean
+        webhookAlerts:
+          type: boolean
+        dailyDigest:
+          type: boolean
+
+    DefaultPreferences:
+      type: object
+      required: [providerId, modelId, temperature, maxTokens]
+      properties:
+        providerId:
+          type: string
+          nullable: true
+        modelId:
+          type: string
+          nullable: true
+        temperature:
+          type: number
+        maxTokens:
+          type: integer
+
+    UserPreferences:
+      type: object
+      required: [theme, language, timezone, notifications, defaults]
+      properties:
+        theme:
+          $ref: "#/components/schemas/ThemePreference"
+        language:
+          type: string
+        timezone:
+          type: string
+        notifications:
+          $ref: "#/components/schemas/NotificationPreferences"
+        defaults:
+          $ref: "#/components/schemas/DefaultPreferences"
+
+    UserPreferencesUpdate:
+      type: object
+      properties:
+        theme:
+          $ref: "#/components/schemas/ThemePreference"
+        language:
+          type: string
+        timezone:
+          type: string
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+            push:
+              type: boolean
+            webhookAlerts:
+              type: boolean
+            dailyDigest:
+              type: boolean
+        defaults:
+          type: object
+          properties:
+            providerId:
+              type: string
+              nullable: true
+            modelId:
+              type: string
+              nullable: true
+            temperature:
+              type: number
+            maxTokens:
+              type: integer
+
+    UserHistoryEntry:
+      type: object
+      required: [id, type, description, resourceId, metadata, timestamp]
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/HistoryEventType"
+        description:
+          type: string
+        resourceId:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+
+    UserHistoryResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserHistoryEntry"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # ────────────────────────────────────────
+    # Session Schemas
+    # ────────────────────────────────────────
+    SessionStatus:
+      type: string
+      enum: [active, completed, failed, expired]
+
+    SessionEventType:
+      type: string
+      enum: [message, function_call, function_result, error, system]
+
+    Session:
+      type: object
+      required: [id, userId, providerId, modelId, status, title, messageCount, totalTokens, totalCost, duration, tags, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        providerId:
+          type: string
+        modelId:
+          type: string
+        status:
+          $ref: "#/components/schemas/SessionStatus"
+        title:
+          type: string
+        messageCount:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+        duration:
+          type: number
+          description: Duration in seconds
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SessionEvent:
+      type: object
+      required: [id, type, role, content, tokens, latencyMs, timestamp, metadata]
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/SessionEventType"
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        tokens:
+          type: integer
+        latencyMs:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    SessionSummary:
+      type: object
+      required: [totalMessages, totalTokens, totalCost, averageLatency, errorCount]
+      properties:
+        totalMessages:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+        averageLatency:
+          type: number
+        errorCount:
+          type: integer
+
+    SessionListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    SessionDetailResponse:
+      type: object
+      required: [session, events, summary]
+      properties:
+        session:
+          $ref: "#/components/schemas/Session"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionEvent"
+        summary:
+          $ref: "#/components/schemas/SessionSummary"
+
+    SessionReplayRequest:
+      type: object
+      properties:
+        speed:
+          type: number
+          minimum: 0.25
+          maximum: 10
+          default: 1
+        startFromEvent:
+          type: integer
+          minimum: 0
+        includeSystemEvents:
+          type: boolean
+          default: false
+
+    SessionReplayResponse:
+      type: object
+      required: [sessionId, events, totalDuration, playbackSpeed]
+      properties:
+        sessionId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionEvent"
+        totalDuration:
+          type: number
+        playbackSpeed:
+          type: number
+
+    # ────────────────────────────────────────
+    # Command Schemas
+    # ────────────────────────────────────────
+    CommandState:
+      type: string
+      enum: [queued, running, completed, failed, cancelled, timeout]
+
+    CommandExecuteRequest:
+      type: object
+      required: [command, args]
+      properties:
+        command:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        args:
+          type: array
+          items:
+            type: string
+            maxLength: 500
+          maxItems: 50
+          default: []
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+        timeout:
+          type: integer
+          minimum: 1000
+          maximum: 300000
+          default: 30000
+        workingDirectory:
+          type: string
+
+    CommandExecuteResponse:
+      type: object
+      required: [commandId, status, startedAt, estimatedDuration]
+      properties:
+        commandId:
+          type: string
+        status:
+          $ref: "#/components/schemas/CommandState"
+        startedAt:
+          type: string
+          format: date-time
+        estimatedDuration:
+          type: integer
+          nullable: true
+
+    CommandProgress:
+      type: object
+      required: [percentage, currentStep, totalSteps, completedSteps]
+      properties:
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        currentStep:
+          type: string
+        totalSteps:
+          type: integer
+        completedSteps:
+          type: integer
+
+    CommandStatusResponse:
+      type: object
+      required: [commandId, command, status, exitCode, startedAt, completedAt, duration, progress]
+      properties:
+        commandId:
+          type: string
+        command:
+          type: string
+        status:
+          $ref: "#/components/schemas/CommandState"
+        exitCode:
+          type: integer
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        duration:
+          type: number
+          nullable: true
+        progress:
+          $ref: "#/components/schemas/CommandProgress"
+
+    CommandLog:
+      type: object
+      required: [id, commandId, stream, content, timestamp, lineNumber]
+      properties:
+        id:
+          type: string
+        commandId:
+          type: string
+        stream:
+          type: string
+          enum: [stdout, stderr]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        lineNumber:
+          type: integer
+
+    CommandLogsResponse:
+      type: object
+      required: [commandId, logs, totalLines, truncated]
+      properties:
+        commandId:
+          type: string
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommandLog"
+        totalLines:
+          type: integer
+        truncated:
+          type: boolean
+
+    # ────────────────────────────────────────
+    # Webhook Schemas
+    # ────────────────────────────────────────
+    WebhookEventType:
+      type: string
+      enum:
+        - session.created
+        - session.completed
+        - command.executed
+        - command.failed
+        - config.updated
+        - health.degraded
+        - health.recovered
+        - error.critical
+
+    WebhookStatus:
+      type: string
+      enum: [active, paused, failed, disabled]
+
+    RetryPolicy:
+      type: object
+      required: [maxRetries, retryIntervalMs, backoffMultiplier]
+      properties:
+        maxRetries:
+          type: integer
+          minimum: 0
+          maximum: 10
+        retryIntervalMs:
+          type: integer
+          minimum: 1000
+        backoffMultiplier:
+          type: number
+          minimum: 1
+          maximum: 5
+
+    WebhookDeliveryStats:
+      type: object
+      required: [totalDeliveries, successfulDeliveries, failedDeliveries, averageLatencyMs]
+      properties:
+        totalDeliveries:
+          type: integer
+        successfulDeliveries:
+          type: integer
+        failedDeliveries:
+          type: integer
+        averageLatencyMs:
+          type: number
+
+    Webhook:
+      type: object
+      required: [id, url, events, secret, status, description, headers, retryPolicy, lastTriggeredAt, deliveryStats, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+        secret:
+          type: string
+        status:
+          $ref: "#/components/schemas/WebhookStatus"
+        description:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        retryPolicy:
+          $ref: "#/components/schemas/RetryPolicy"
+        lastTriggeredAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveryStats:
+          $ref: "#/components/schemas/WebhookDeliveryStats"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WebhookRegisterRequest:
+      type: object
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
+          minItems: 1
+        description:
+          type: string
+          maxLength: 500
+        secret:
+          type: string
+          minLength: 16
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        retryPolicy:
+          type: object
+          properties:
+            maxRetries:
+              type: integer
+              minimum: 0
+              maximum: 10
+            retryIntervalMs:
+              type: integer
+              minimum: 1000
+            backoffMultiplier:
+              type: number
+              minimum: 1
+              maximum: 5
+
+    WebhookTestPayload:
+      type: object
+      required: [event, timestamp, data]
+      properties:
+        event:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          additionalProperties: true
+
+    WebhookTestResponse:
+      type: object
+      required: [webhookId, delivered, statusCode, responseTime, error, payload]
+      properties:
+        webhookId:
+          type: string
+        delivered:
+          type: boolean
+        statusCode:
+          type: integer
+          nullable: true
+        responseTime:
+          type: number
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        payload:
+          $ref: "#/components/schemas/WebhookTestPayload"
+
+    WebhookListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Webhook"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    # ────────────────────────────────────────
+    # Analytics Schemas
+    # ────────────────────────────────────────
+    TrendDirection:
+      type: string
+      enum: [up, down, stable]
+
+    AnalyticsDataPoint:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        label:
+          type: string
+
+    AnalyticsSeries:
+      type: object
+      required: [name, data, total, average, min, max]
+      properties:
+        name:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDataPoint"
+        total:
+          type: number
+        average:
+          type: number
+        min:
+          type: number
+        max:
+          type: number
+
+    AnalyticsSummary:
+      type: object
+      required: [totalSessions, totalCommands, totalTokens, totalCost, totalErrors, averageSessionDuration, mostActiveDay]
+      properties:
+        totalSessions:
+          type: integer
+        totalCommands:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+        totalErrors:
+          type: integer
+        averageSessionDuration:
+          type: number
+        mostActiveDay:
+          type: string
+
+    DailyAnalytics:
+      type: object
+      required: [date, sessions, commands, tokens, cost, errors, uniqueUsers, averageLatency]
+      properties:
+        date:
+          type: string
+          format: date
+        sessions:
+          type: integer
+        commands:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        errors:
+          type: integer
+        uniqueUsers:
+          type: integer
+        averageLatency:
+          type: number
+
+    AnalyticsDailyResponse:
+      type: object
+      required: [period, data, summary]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyAnalytics"
+        summary:
+          $ref: "#/components/schemas/AnalyticsSummary"
+
+    WeeklyAnalytics:
+      type: object
+      required: [weekStart, weekEnd, sessions, commands, tokens, cost, errors, uniqueUsers, growthRate]
+      properties:
+        weekStart:
+          type: string
+          format: date
+        weekEnd:
+          type: string
+          format: date
+        sessions:
+          type: integer
+        commands:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        errors:
+          type: integer
+        uniqueUsers:
+          type: integer
+        growthRate:
+          type: number
+
+    AnalyticsWeeklyResponse:
+      type: object
+      required: [period, data, summary]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyAnalytics"
+        summary:
+          $ref: "#/components/schemas/AnalyticsSummary"
+
+    MonthlyAnalytics:
+      type: object
+      required: [month, sessions, commands, tokens, cost, errors, uniqueUsers, growthRate, projectedCost]
+      properties:
+        month:
+          type: string
+          example: "2025-03"
+        sessions:
+          type: integer
+        commands:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        errors:
+          type: integer
+        uniqueUsers:
+          type: integer
+        growthRate:
+          type: number
+        projectedCost:
+          type: number
+
+    AnalyticsMonthlyResponse:
+      type: object
+      required: [period, data, summary]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyAnalytics"
+        summary:
+          $ref: "#/components/schemas/AnalyticsSummary"
+
+    LanguageStats:
+      type: object
+      required: [language, sessions, tokens, cost, percentage, trend]
+      properties:
+        language:
+          type: string
+        sessions:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        percentage:
+          type: number
+        trend:
+          $ref: "#/components/schemas/TrendDirection"
+
+    AnalyticsByLanguageResponse:
+      type: object
+      required: [period, languages, totalLanguages]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/LanguageStats"
+        totalLanguages:
+          type: integer
+
+    ModelStats:
+      type: object
+      required: [modelId, modelName, provider, sessions, tokens, cost, averageLatency, errorRate, satisfaction, percentage]
+      properties:
+        modelId:
+          type: string
+        modelName:
+          type: string
+        provider:
+          type: string
+        sessions:
+          type: integer
+        tokens:
+          type: integer
+        cost:
+          type: number
+        averageLatency:
+          type: number
+        errorRate:
+          type: number
+        satisfaction:
+          type: number
+          nullable: true
+        percentage:
+          type: number
+
+    AnalyticsByModelResponse:
+      type: object
+      required: [period, models, totalModels]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        models:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelStats"
+        totalModels:
+          type: integer
+
+    TrendData:
+      type: object
+      required: [metric, current, previous, change, changePercentage, direction, series]
+      properties:
+        metric:
+          type: string
+        current:
+          type: number
+        previous:
+          type: number
+        change:
+          type: number
+        changePercentage:
+          type: number
+        direction:
+          $ref: "#/components/schemas/TrendDirection"
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDataPoint"
+
+    TrendInsight:
+      type: object
+      required: [type, metric, message, significance]
+      properties:
+        type:
+          type: string
+          enum: [positive, negative, neutral]
+        metric:
+          type: string
+        message:
+          type: string
+        significance:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    AnalyticsTrendsResponse:
+      type: object
+      required: [period, trends, insights]
+      properties:
+        period:
+          $ref: "#/components/schemas/DateRangeParams"
+        trends:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendData"
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendInsight"
+
+    # ────────────────────────────────────────
+    # Wrapped API Response Schemas
+    # ────────────────────────────────────────
+    ApiResponseStat:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/Stat"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseStatListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/StatListResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseStatDetailResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/StatDetailResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseDeleteResult:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/DeleteResult"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseProviderListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ProviderListResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseProviderDetailResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ProviderDetailResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseProviderValidateResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ProviderValidateResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseModelListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ModelListResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseModelCompareResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ModelCompareResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseConfigGenerateResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ConfigGenerateResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseConfigValidateResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ConfigValidateResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseConfigParseResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/ConfigParseResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseHealthStatus:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/HealthStatus"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseHealthMetrics:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/HealthMetrics"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseHealthDependenciesResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/HealthDependenciesResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseUserProfile:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/UserProfile"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseUserPreferences:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/UserPreferences"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseUserHistoryResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/UserHistoryResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseSessionListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/SessionListResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseSessionDetailResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/SessionDetailResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseSessionReplayResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/SessionReplayResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseCommandExecuteResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/CommandExecuteResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseCommandStatusResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/CommandStatusResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseCommandLogsResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/CommandLogsResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseWebhook:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/Webhook"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseWebhookListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/WebhookListResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseWebhookTestResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/WebhookTestResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsDailyResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsDailyResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsWeeklyResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsWeeklyResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsMonthlyResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsMonthlyResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsByLanguageResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsByLanguageResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsByModelResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsByModelResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ApiResponseAnalyticsTrendsResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: "#/components/schemas/AnalyticsTrendsResponse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"

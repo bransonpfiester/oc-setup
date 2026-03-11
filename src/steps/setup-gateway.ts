@@ -175,23 +175,15 @@ function buildOnboardArgs(ctx: SetupContext): string[] {
 
   const method = ctx.model.authMethod || "api-key";
 
-  // Anthropic subscription methods
-  if (ctx.model.provider === "anthropic" && method === "oauth") {
-    args.push("--auth-choice", "anthropic-oauth");
-    return args;
-  }
-  if (ctx.model.provider === "anthropic" && method === "setup-token") {
-    args.push("--auth-choice", "anthropic-token");
-    return args;
-  }
-
-  // OpenAI subscription methods
-  if (ctx.model.provider === "openai" && method === "codex-oauth") {
-    args.push("--auth-choice", "openai-code-oauth");
-    return args;
-  }
-  if (ctx.model.provider === "openai" && method === "codex-reuse") {
-    args.push("--auth-choice", "openai-code-subscription");
+  // OAuth/subscription methods: let onboarding's interactive wizard handle auth
+  if (["oauth", "setup-token", "codex-oauth", "codex-reuse"].includes(method)) {
+    // Don't pass --auth-choice, let the user pick from the wizard menu
+    // Remove --accept-risk so all prompts are shown
+    const riskIdx = args.indexOf("--accept-risk");
+    if (riskIdx !== -1) args.splice(riskIdx, 1);
+    // Remove --secret-input-mode and its value
+    const simIdx = args.indexOf("--secret-input-mode");
+    if (simIdx !== -1) args.splice(simIdx, 2);
     return args;
   }
 

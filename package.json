@@ -1,6 +1,6 @@
 {
   "name": "setupclaw",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "OpenClaw client setup CLI — zero to working AI agent in minutes",
   "type": "module",
   "bin": {
@@ -9,7 +9,10 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "openclaw",
@@ -30,7 +33,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "tsup": "^8.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
   }
 }

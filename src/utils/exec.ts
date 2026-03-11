@@ -59,8 +59,9 @@ export async function runInteractive(
   command: string,
   args: string[] = [],
 ): Promise<number> {
+  const fullCmd = [command, ...args].join(" ");
   return new Promise((resolve) => {
-    const child = spawn(command, args, {
+    const child = spawn(fullCmd, [], {
       stdio: "inherit",
       shell: true,
       env: process.env,
