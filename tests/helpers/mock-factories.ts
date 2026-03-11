@@ -14,12 +14,12 @@ export function createMockContext(overrides: Partial<SetupContext> = {}): SetupC
     timezone: "America/New_York",
     channel: "telegram" as Channel,
     telegramUserId: "123456789",
-    telegram: { token: "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR", botUsername: "test_bot" },
+    telegram: { token: "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000", botUsername: "test_bot" },
     discord: null,
     mattermost: null,
     model: {
       provider: "anthropic",
-      apiKey: "sk-ant-test-key-12345",
+      apiKey: "test-fake-key-000",
       modelId: "claude-sonnet-4-5-20250514",
       authMethod: "api-key",
     },
@@ -64,12 +64,12 @@ export function createMockConfig(overrides: Partial<OpenClawConfig> = {}): OpenC
       timezone: "America/New_York",
     },
     telegram: {
-      token: "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR",
+      token: "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000",
       botUsername: "test_bot",
     },
     model: {
       provider: "anthropic",
-      apiKey: "sk-ant-test-key",
+      apiKey: "test-fake-key-000",
       modelId: "claude-sonnet-4-5-20250514",
     },
     gateway: {
@@ -125,9 +125,9 @@ export function createMockPreset(overrides: Partial<PersonalityPreset> = {}): Pe
 }
 
 export const VALID_TELEGRAM_TOKENS = [
-  "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqRss",
-  "98765432:ZZYYxxWWvvUUttSSrrQQppOOnnMMllKKjjI",
-  "11111111:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_bb",
+  "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000",
+  "0000000001:TEST_TOKEN_VARIATION_TWO_00000000",
+  "0000000002:TEST_TOKEN_VARIATION_THREE_000000",
 ];
 
 export const INVALID_TELEGRAM_TOKENS = [
@@ -142,9 +142,9 @@ export const INVALID_TELEGRAM_TOKENS = [
 ];
 
 export const VALID_API_KEYS = {
-  anthropic: "sk-ant-api03-valid-key-12345",
-  openai: "sk-valid-openai-key-12345",
-  openrouter: "sk-or-valid-key-12345",
+  anthropic: "test-fake-ant-key",
+  openai: "test-fake-oai-key",
+  openrouter: "test-fake-or-key",
 };
 
 export const ALL_CHANNELS: Channel[] = [

@@ -18,7 +18,7 @@ import { logger } from "../../src/utils/logger.js";
 
 describe("telegram", () => {
   const mockFetch = vi.fn();
-  const VALID_TOKEN = "12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk";
+  const VALID_TOKEN = "0000000000:TEST_TOKEN_FORMAT_CHECK_000000000000";
 
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch);
@@ -38,7 +38,7 @@ describe("telegram", () => {
     });
 
     it("rejects token with too-short numeric part (less than 8 digits)", () => {
-      expect(isValidTokenFormat("1234567:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk")).toBe(false);
+      expect(isValidTokenFormat("1234567:TEST_TOKEN_FORMAT_CHECK_000000000000")).toBe(false);
     });
 
     it("rejects token with too-short string part (less than 35 chars)", () => {
@@ -59,15 +59,15 @@ describe("telegram", () => {
     });
 
     it("accepts token with underscores in string part", () => {
-      expect(isValidTokenFormat("12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZ_________")).toBe(true);
+      expect(isValidTokenFormat("0000000000:TEST_TOKEN_UNDERSCORES_00000000000_")).toBe(true);
     });
 
     it("accepts token with hyphens in string part", () => {
-      expect(isValidTokenFormat("12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZ---------")).toBe(true);
+      expect(isValidTokenFormat("0000000000:TEST_TOKEN_HYPHENS_000000000000000-")).toBe(true);
     });
 
     it("accepts token with numbers in string part", () => {
-      expect(isValidTokenFormat("12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")).toBe(true);
+      expect(isValidTokenFormat("0000000000:TEST_TOKEN_NUMBERS_0000000000000000")).toBe(true);
     });
 
     it("rejects colon with no string part", () => {

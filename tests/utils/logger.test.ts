@@ -66,7 +66,7 @@ describe("redact()", () => {
   });
 
   it("masks OpenAI API keys (sk-...)", () => {
-    const result = logger.redact("key: sk-proj1234abcdefghijklmnopqrst");
+    const result = logger.redact("key: test-fake-key-for-redaction-test00");
     expect(result).toBe("key: sk-proj1234...");
     expect(result).not.toContain("abcdefghijklmnopqrst");
   });
@@ -86,7 +86,7 @@ describe("redact()", () => {
 
   it("masks multiple keys in a single message", () => {
     const input =
-      "keys: sk-proj1234secretkey1 and sk-anotherabcsecretkey2";
+      "keys: test-fake-key-one-000 and test-fake-key-two-000";
     const result = logger.redact(input);
     expect(result).not.toContain("secretkey1");
     expect(result).not.toContain("secretkey2");
@@ -172,7 +172,7 @@ describe("logger.redact export", () => {
   });
 
   it("is the same function used internally for log redaction", () => {
-    const secret = "sk-proj1234abcdefghijklmnop";
+    const secret = "test-fake-key-for-redaction-test";
     logger.info(`using ${secret}`);
     const written = mockedAppend.mock.calls[0]?.[1] as string;
     const expected = logger.redact(`using ${secret}`);
@@ -213,7 +213,7 @@ describe("message edge cases", () => {
   });
 
   it("redacts keys embedded in log messages", () => {
-    logger.info("Connected with sk-proj1234abcdefghijklmnop");
+    logger.info("Connected with test-fake-key-for-redaction-test");
     const written = mockedAppend.mock.calls[0]?.[1] as string;
     expect(written).not.toContain("abcdefghijklmnop");
     expect(written).toContain("sk-proj1234...");

@@ -62,7 +62,7 @@ describe("redact edge cases – Anthropic key patterns", () => {
 
 describe("redact edge cases – OpenAI key patterns", () => {
   it("masks a standard OpenAI key without ant prefix", () => {
-    const result = logger.redact("sk-abcdefghSECRETSECRETSECRET");
+    const result = logger.redact("test-fake-key-for-redaction-edge");
     expect(result).toBe("sk-abcdefgh...");
   });
 
@@ -103,7 +103,7 @@ describe("redact edge cases – Telegram token patterns", () => {
   });
 
   it("masks a Telegram token followed by an API key", () => {
-    const input = "token=12345:ABCDefghSECRET key=sk-proj1234abcdefghijklmnop";
+    const input = "token=12345:ABCDefghSECRET key=test-fake-key-for-redaction-test";
     const result = logger.redact(input);
     expect(result).not.toContain("SECRET");
     expect(result).not.toContain("abcdefghijklmnop");
@@ -118,7 +118,7 @@ describe("redact edge cases – Telegram token patterns", () => {
 describe("redact edge cases – multiple key types", () => {
   it("masks both Anthropic and OpenAI keys in one message", () => {
     const input =
-      "anthropic=sk-ant-prefix12_SECRETANTHROPIC openai=sk-proj5678secretopenai";
+      "anthropic=test-fake-ant-key-edge-case000 openai=test-fake-oai-key-edge-case";
     const result = logger.redact(input);
     expect(result).not.toContain("SECRETANTHROPIC");
     expect(result).not.toContain("secretopenai");
@@ -127,7 +127,7 @@ describe("redact edge cases – multiple key types", () => {
   it("masks all three key types in a single message", () => {
     const input = [
       "ant=sk-ant-abcd1234_SECRETANT",
-      "oai=sk-openai12SECRETOAI",
+      "oai=test-fake-oai-key-edge2",
       "tg=12345:tgtoken12SECRETTG",
     ].join(" ");
     const result = logger.redact(input);
@@ -180,7 +180,7 @@ describe("logger write edge cases", () => {
 
 describe("redact purity and special inputs", () => {
   it("returns a new string without mutating the input", () => {
-    const input = "sk-proj1234abcdefghijklmnop";
+    const input = "test-fake-key-for-redaction-test";
     const copy = input.slice();
     const result = logger.redact(input);
     expect(input).toBe(copy);
@@ -206,7 +206,7 @@ describe("redact purity and special inputs", () => {
   });
 
   it("preserves unicode characters through redaction", () => {
-    const input = "🔑 key=sk-proj1234abcdefghijklmnop 🔒";
+    const input = "🔑 key=test-fake-key-for-redaction-test 🔒";
     const result = logger.redact(input);
     expect(result).toContain("🔑");
     expect(result).toContain("🔒");

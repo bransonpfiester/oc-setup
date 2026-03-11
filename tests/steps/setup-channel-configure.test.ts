@@ -94,7 +94,7 @@ describe("collectChannelInputs — telegram details", () => {
     vi.mocked(p.select).mockResolvedValue("telegram");
     vi.mocked(p.text)
       .mockResolvedValueOnce("123456789")
-      .mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+      .mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     vi.mocked(validateToken).mockResolvedValue({
       id: 123, username: "bot", firstName: "Bot",
     });
@@ -109,7 +109,7 @@ describe("collectChannelInputs — telegram details", () => {
   it("collectTelegramInputs skips user ID when pre-configured", async () => {
     ctx.telegramUserId = "987654321";
     vi.mocked(p.select).mockResolvedValue("telegram");
-    vi.mocked(p.text).mockResolvedValue("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    vi.mocked(p.text).mockResolvedValue("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     vi.mocked(validateToken).mockResolvedValue({
       id: 123, username: "bot", firstName: "Bot",
     });
@@ -123,7 +123,7 @@ describe("collectChannelInputs — telegram details", () => {
     vi.mocked(p.select).mockResolvedValue("telegram");
     vi.mocked(p.text)
       .mockResolvedValueOnce("123456789")
-      .mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+      .mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     vi.mocked(validateToken).mockResolvedValue({
       id: 123, username: "bot", firstName: "Bot",
     });
@@ -168,7 +168,7 @@ describe("collectChannelInputs — telegram details", () => {
 
   it("collectTelegramInputs validates pre-configured token", async () => {
     ctx.telegramUserId = "111";
-    ctx.telegram = { token: "12345678:validTokenHere_xxxxxxxxxxxxxxxxxxxxxx", botUsername: "" };
+    ctx.telegram = { token: "0000000000:TEST_PRECONFIGURED_TOKEN_000000000", botUsername: "" };
     vi.mocked(p.select).mockResolvedValue("telegram");
     vi.mocked(validateToken).mockResolvedValue({
       id: 1, username: "valid_bot", firstName: "Valid",
@@ -177,7 +177,7 @@ describe("collectChannelInputs — telegram details", () => {
     await collectChannelInputs(ctx);
 
     expect(validateToken).toHaveBeenCalledWith(
-      "12345678:validTokenHere_xxxxxxxxxxxxxxxxxxxxxx",
+      "0000000000:TEST_PRECONFIGURED_TOKEN_000000000",
     );
     expect(ctx.telegram!.botUsername).toBe("valid_bot");
   });
@@ -189,7 +189,7 @@ describe("collectChannelInputs — telegram details", () => {
     vi.mocked(validateToken)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 2, username: "new_bot", firstName: "New" });
-    vi.mocked(p.text).mockResolvedValue("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    vi.mocked(p.text).mockResolvedValue("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
 
     await collectChannelInputs(ctx);
 
@@ -338,7 +338,7 @@ describe("configureChannel — write and restart", () => {
     vi.mocked(p.select).mockResolvedValue("telegram");
     vi.mocked(p.text)
       .mockResolvedValueOnce("123")
-      .mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+      .mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     vi.mocked(validateToken).mockResolvedValue({
       id: 1, username: "bot", firstName: "Bot",
     });

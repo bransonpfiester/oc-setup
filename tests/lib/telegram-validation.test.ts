@@ -25,12 +25,12 @@ describe("telegram validation details", () => {
 
   describe("isValidTokenFormat boundary cases", () => {
     it("accepts exactly 8 digits in numeric part", () => {
-      const token = "12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk";
+      const token = "0000000000:TEST_TOKEN_FORMAT_CHECK_000000000000";
       expect(isValidTokenFormat(token)).toBe(true);
     });
 
     it("accepts 10 digits in numeric part", () => {
-      const token = "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk";
+      const token = "0000000003:TEST_TOKEN_FORMAT_CHECK_000000000000";
       expect(isValidTokenFormat(token)).toBe(true);
     });
 
@@ -57,7 +57,7 @@ describe("telegram validation details", () => {
     });
 
     it("rejects 7 digits in numeric part", () => {
-      const token = "1234567:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk";
+      const token = "1234567:TEST_TOKEN_FORMAT_CHECK_000000000000";
       expect(isValidTokenFormat(token)).toBe(false);
     });
 
@@ -78,7 +78,7 @@ describe("telegram validation details", () => {
     });
 
     it("accepts numbers mixed in string part", () => {
-      const token = "12345678:ABC123DEF456GHI789JKL012MNO345PQRST";
+      const token = "0000000000:TEST_TOKEN_MIXED_CHARS_000000000000";
       expect(isValidTokenFormat(token)).toBe(true);
     });
 
@@ -109,7 +109,7 @@ describe("telegram validation details", () => {
 
   describe("validateToken additional scenarios", () => {
     const VALID_TOKEN =
-      "12345678:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk";
+      "0000000000:TEST_TOKEN_FORMAT_CHECK_000000000000";
 
     function makeBotResponse(
       ok: boolean,
@@ -166,7 +166,7 @@ describe("telegram validation details", () => {
     });
 
     it("handles multiple valid tokens independently", async () => {
-      const token2 = "99999999:ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZz";
+      const token2 = "0000000099:TEST_TOKEN_CONCURRENT_000000000000000";
       mockFetch.mockResolvedValue(
         makeBotResponse(true, {
           id: 1,

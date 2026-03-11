@@ -66,7 +66,7 @@ describe("collectTelegramInputs", () => {
 
   it("calls collectUserId then collectBotToken", async () => {
     mockText.mockResolvedValueOnce("999888777");
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 123, username: "my_bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -78,7 +78,7 @@ describe("collectTelegramInputs", () => {
 
   it("collectUserId asks for user ID when empty", async () => {
     mockText.mockResolvedValueOnce("111222333");
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 123, username: "bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -92,7 +92,7 @@ describe("collectTelegramInputs", () => {
 
   it("collectUserId skips when pre-configured", async () => {
     ctx.telegramUserId = "555666777";
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 123, username: "bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -105,7 +105,7 @@ describe("collectTelegramInputs", () => {
 
   it("collectUserId validates numeric input", async () => {
     mockText.mockResolvedValueOnce("123456");
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 123, username: "bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -127,7 +127,7 @@ describe("collectTelegramInputs", () => {
 
   it("collectBotToken validates pre-configured token", async () => {
     ctx.telegramUserId = "111";
-    ctx.telegram = { token: "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR", botUsername: "" };
+    ctx.telegram = { token: "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000", botUsername: "" };
     mockValidateToken.mockResolvedValueOnce({ id: 1, username: "valid_bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -139,7 +139,7 @@ describe("collectTelegramInputs", () => {
     ctx.telegramUserId = "111";
     ctx.telegram = { token: "bad-token", botUsername: "" };
     mockValidateToken.mockResolvedValueOnce(null);
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 1, username: "new_bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -152,7 +152,7 @@ describe("collectTelegramInputs", () => {
 
   it("collectBotToken shows BotFather instructions", async () => {
     ctx.telegramUserId = "111";
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 1, username: "bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -169,7 +169,7 @@ describe("collectTelegramInputs", () => {
     mockValidateToken.mockResolvedValueOnce(null);
     mockText.mockResolvedValueOnce("bad2");
     mockValidateToken.mockResolvedValueOnce(null);
-    mockText.mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     mockValidateToken.mockResolvedValueOnce({ id: 1, username: "bot", firstName: "Bot" });
 
     await collectTelegramInputs(ctx);
@@ -198,13 +198,13 @@ describe("collectTelegramInputs", () => {
 
   it("collectBotToken sets telegram on context", async () => {
     ctx.telegramUserId = "111";
-    mockText.mockResolvedValueOnce("99887766:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    mockText.mockResolvedValueOnce("0000000099:TEST_TOKEN_VARIATION_99_0000000000");
     mockValidateToken.mockResolvedValueOnce({ id: 99, username: "test_bot", firstName: "Test" });
 
     await collectTelegramInputs(ctx);
 
     expect(ctx.telegram).toEqual({
-      token: "99887766:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR",
+      token: "0000000099:TEST_TOKEN_VARIATION_99_0000000000",
       botUsername: "test_bot",
     });
   });

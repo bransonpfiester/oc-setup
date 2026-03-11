@@ -67,7 +67,7 @@ describe("configureTelegram – config writing details", () => {
 
   beforeEach(() => {
     ctx = createMockContext({
-      telegram: { token: "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR", botUsername: "test_bot" },
+      telegram: { token: "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000", botUsername: "test_bot" },
       telegramUserId: "999888777",
     });
     mockExistsSync.mockReturnValue(false);
@@ -108,7 +108,7 @@ describe("configureTelegram – config writing details", () => {
     const config = getWrittenConfig();
     const channels = config.channels as Record<string, unknown>;
     const tg = channels.telegram as Record<string, unknown>;
-    expect(tg.botToken).toBe("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+    expect(tg.botToken).toBe("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
   });
 
   it("config includes dmPolicy: allowlist", async () => {

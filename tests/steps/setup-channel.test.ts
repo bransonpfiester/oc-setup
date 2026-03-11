@@ -124,7 +124,7 @@ describe("collectChannelInputs", () => {
     vi.mocked(p.select).mockResolvedValue("telegram");
     vi.mocked(p.text)
       .mockResolvedValueOnce("123456789")
-      .mockResolvedValueOnce("12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR");
+      .mockResolvedValueOnce("0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000");
     vi.mocked(validateToken).mockResolvedValue({
       id: 123, username: "test_bot", firstName: "Test",
     });
@@ -133,7 +133,7 @@ describe("collectChannelInputs", () => {
 
     expect(ctx.telegramUserId).toBe("123456789");
     expect(ctx.telegram).toEqual({
-      token: "12345678:AABBccDDeeFFggHHiiJJkkLLmmNNooPPqqR",
+      token: "0000000000:TEST_TOKEN_FOR_UNIT_TESTS_ONLY_0000",
       botUsername: "test_bot",
     });
   });
