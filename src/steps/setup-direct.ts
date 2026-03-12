@@ -1,4 +1,5 @@
 import * as p from "@clack/prompts";
+import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -54,7 +55,9 @@ function writeFullConfig(ctx: SetupContext): void {
   const providerName = ctx.model ? getProviderName(ctx.model.provider) : "anthropic";
   const modelId = ctx.model?.modelId || "claude-sonnet-4-6";
 
+  const existingAgents = (ocConfig.agents as Record<string, unknown>) ?? {};
   ocConfig.agents = {
+    ...existingAgents,
     defaults: {
       workspace: WORKSPACE,
       model: `${providerName}/${modelId}`,
@@ -86,6 +89,21 @@ function writeFullConfig(ctx: SetupContext): void {
         allowFrom: [ctx.telegramUserId],
         groupPolicy: "allowlist",
         streaming: "partial",
+      },
+    };
+  } else if (ctx.discord) {
+    ocConfig.channels = {
+      discord: {
+        enabled: true,
+        botToken: ctx.discord.token,
+      },
+    };
+  } else if (ctx.mattermost) {
+    ocConfig.channels = {
+      mattermost: {
+        enabled: true,
+        url: ctx.mattermost.url,
+        token: ctx.mattermost.token,
       },
     };
   }
@@ -128,10 +146,5 @@ function getProviderName(provider: string): string {
 }
 
 function generateToken(): string {
-  const chars = "abcdef0123456789";
-  let token = "";
-  for (let i = 0; i < 48; i++) {
-    token += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return token;
+  return randomBytes(24).toString("hex");
 }
