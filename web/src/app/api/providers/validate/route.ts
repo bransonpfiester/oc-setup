@@ -22,6 +22,7 @@ async function validateAnthropic(apiKey: string): Promise<ProviderValidateRespon
         max_tokens: 1,
         messages: [],
       }),
+      signal: AbortSignal.timeout(10_000),
     });
 
     const valid = res.status !== 401 && res.status !== 403;
@@ -47,6 +48,7 @@ async function validateOpenAI(apiKey: string): Promise<ProviderValidateResponse>
   try {
     const res = await fetch(OPENAI_MODELS_URL, {
       headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
     });
 
     const valid = res.status === 200;
@@ -74,6 +76,7 @@ async function validateOpenRouter(apiKey: string): Promise<ProviderValidateRespo
   try {
     const res = await fetch(OPENROUTER_MODELS_URL, {
       headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
     });
 
     const valid = res.status === 200;

@@ -11,7 +11,7 @@ import * as os from "node:os";
  */
 export async function GET(_request: NextRequest) {
   try {
-    const cpuUsage = process.cpuUsage();
+    const loadAvg = os.loadavg();
     const mem = process.memoryUsage();
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
@@ -19,11 +19,9 @@ export async function GET(_request: NextRequest) {
 
     const metrics: HealthMetrics = {
       cpu: {
-        usage: Number(
-          (((cpuUsage.user + cpuUsage.system) / 1_000_000) * 100).toFixed(1),
-        ),
+        usage: Number((loadAvg[0] * 100 / os.cpus().length).toFixed(1)),
         cores: os.cpus().length,
-        loadAverage: os.loadavg(),
+        loadAverage: loadAvg,
       },
       memory: {
         used: usedMem,

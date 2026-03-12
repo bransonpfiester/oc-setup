@@ -13,7 +13,6 @@ import { commandsStore } from "@/lib/stores/commands";
 const ALLOWED_COMMANDS = new Set([
   "setupclaw", "openclaw", "init", "doctor", "update", "reset",
   "add-channel", "status", "config", "logs", "version", "help",
-  "npm", "npx", "node",
 ]);
 
 /**

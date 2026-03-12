@@ -37,10 +37,20 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
     filtered = filtered.filter((s) => s.category === category);
   }
 
+  const validSortFields = ["id", "name", "value", "unit", "category", "createdAt", "updatedAt"];
+  if (!validSortFields.includes(sort.sortBy)) {
+    sort.sortBy = "createdAt";
+  }
+
   filtered.sort((a, b) => {
     const aVal = a[sort.sortBy as keyof Stat] ?? "";
     const bVal = b[sort.sortBy as keyof Stat] ?? "";
-    const cmp = String(aVal).localeCompare(String(bVal));
+    let cmp: number;
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      cmp = aVal - bVal;
+    } else {
+      cmp = String(aVal).localeCompare(String(bVal));
+    }
     return sort.sortOrder === "asc" ? cmp : -cmp;
   });
 

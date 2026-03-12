@@ -8,6 +8,25 @@ import {
 import type { WebhookTestResponse, WebhookTestPayload } from "@/types/api";
 import { webhooksStore } from "@/lib/stores/webhooks";
 
+function isAllowedWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const hostname = parsed.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") return false;
+    if (hostname.startsWith("10.") || hostname.startsWith("192.168.")) return false;
+    if (hostname.startsWith("172.")) {
+      const second = parseInt(hostname.split(".")[1]);
+      if (second >= 16 && second <= 31) return false;
+    }
+    if (hostname === "169.254.169.254") return false;
+    if (hostname.endsWith(".internal") || hostname.endsWith(".local")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * @route POST /api/webhooks/{id}/test
  * @description Send a test payload to a webhook endpoint to verify connectivity.
@@ -39,6 +58,10 @@ export const POST = withErrorHandling(async (req: NextRequest, ctx) => {
       webhookId: id,
     },
   };
+
+  if (!isAllowedWebhookUrl(webhook.url)) {
+    throw errorResponse("INVALID_URL", "Webhook URL targets a private or restricted address", 400);
+  }
 
   try {
     const start = Date.now();
