@@ -1,4 +1,7 @@
 import * as p from "@clack/prompts";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { run } from "../utils/exec.js";
 import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
@@ -32,16 +35,36 @@ export async function verify(ctx: SetupContext): Promise<void> {
     });
   }
 
-  // Telegram check
-  if (ctx.telegram) {
+  // Channel check
+  if (ctx.channel === "telegram") {
+    if (ctx.telegram) {
+      checks.push({
+        label: "Telegram",
+        ok: true,
+        detail: `connected (@${ctx.telegram.botUsername})`,
+      });
+    } else {
+      checks.push({
+        label: "Telegram",
+        ok: false,
+        detail: "not configured",
+      });
+    }
+  } else if (ctx.channel === "discord") {
     checks.push({
-      label: "Telegram",
+      label: "Discord",
+      ok: !!ctx.discord,
+      detail: ctx.discord ? "connected" : "not configured",
+    });
+  } else if (ctx.channel) {
+    checks.push({
+      label: ctx.channel,
       ok: true,
-      detail: `connected (@${ctx.telegram.botUsername})`,
+      detail: "configured",
     });
   } else {
     checks.push({
-      label: "Telegram",
+      label: "Channel",
       ok: false,
       detail: "not configured",
     });
@@ -63,13 +86,16 @@ export async function verify(ctx: SetupContext): Promise<void> {
   }
 
   // Workspace check
+  const workspaceExists = existsSync(
+    join(homedir(), ".openclaw", "workspace"),
+  );
   checks.push({
     label: "Memory",
-    ok: true,
-    detail: "workspace initialized",
+    ok: workspaceExists,
+    detail: workspaceExists ? "workspace initialized" : "workspace not found",
   });
 
-  // Heartbeat check
+  // Heartbeat check — placeholder until runtime heartbeat probing is available
   checks.push({
     label: "Heartbeat",
     ok: true,

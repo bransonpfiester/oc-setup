@@ -13,7 +13,9 @@ function redact(message: string): string {
   return message
     .replace(/(sk-ant-[A-Za-z0-9_-]{0,8})[A-Za-z0-9_-]+/g, "$1...")
     .replace(/(sk-[A-Za-z0-9]{0,8})[A-Za-z0-9]+/g, "$1...")
-    .replace(/(\d{5,}:[A-Za-z0-9_-]{0,8})[A-Za-z0-9_-]+/g, "$1...");
+    .replace(/(\d{5,}:[A-Za-z0-9_-]{0,8})[A-Za-z0-9_-]+/g, "$1...")
+    .replace(/(AIza[A-Za-z0-9]{0,8})[A-Za-z0-9_-]+/g, "$1...")
+    .replace(/(xai-[A-Za-z0-9]{0,8})[A-Za-z0-9_-]+/g, "$1...");
 }
 
 function write(level: string, message: string): void {

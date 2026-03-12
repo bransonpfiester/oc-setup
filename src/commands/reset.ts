@@ -40,20 +40,25 @@ export async function resetCommand(): Promise<void> {
     const backup = p.spinner();
     backup.start("Backing up current config...");
 
+    let backupOk = false;
     try {
       cpSync(openclawDir, backupDir, { recursive: true });
+      backupOk = true;
       backup.stop(`Backed up to ${backupDir}`);
       logger.info(`Config backed up to ${backupDir}`);
     } catch (err) {
-      backup.stop("Backup failed, continuing anyway");
-      logger.warn(`Backup failed: ${err}`);
+      backup.stop("Backup failed — aborting reset to protect your config");
+      logger.error(`Backup failed: ${err}`);
+      p.log.error("Cannot reset without a successful backup.");
+      return;
     }
 
-    // Remove current config
-    try {
-      rmSync(openclawDir, { recursive: true, force: true });
-    } catch (err) {
-      logger.warn(`Could not remove config dir: ${err}`);
+    if (backupOk) {
+      try {
+        rmSync(openclawDir, { recursive: true, force: true });
+      } catch (err) {
+        logger.warn(`Could not remove config dir: ${err}`);
+      }
     }
   }
 

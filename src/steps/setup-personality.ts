@@ -59,7 +59,11 @@ export async function setupPersonality(ctx: SetupContext): Promise<void> {
     process.exit(0);
   }
 
-  const preset = getPreset(presetChoice as string)!;
+  const preset = getPreset(presetChoice as string);
+  if (!preset) {
+    p.log.error("Invalid preset selected");
+    return;
+  }
   ctx.personality.description = preset.description;
 
   const focusAreas = await p.multiselect({

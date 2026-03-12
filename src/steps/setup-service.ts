@@ -1,13 +1,23 @@
 import * as p from "@clack/prompts";
 import { writeFileSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { detectPlatform, paths } from "../lib/platform.js";
 import { runShell } from "../utils/exec.js";
 import { logger } from "../utils/logger.js";
 import type { SetupContext } from "./context.js";
 
-function generatePlist(port: number): string {
-  const logPath = paths().logsDir + "/gateway.log";
+async function findOpenClawPath(): Promise<string> {
+  try {
+    const { runShell: shell } = await import("../utils/exec.js");
+    const { stdout } = await shell("which openclaw");
+    const resolved = stdout.trim();
+    if (resolved) return resolved;
+  } catch {}
+  return "/usr/local/bin/openclaw";
+}
+
+function generatePlist(port: number, binPath: string): string {
+  const logPath = join(paths().logsDir, "gateway.log");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -16,7 +26,7 @@ function generatePlist(port: number): string {
   <string>com.openclaw.gateway</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/local/bin/openclaw</string>
+    <string>${binPath}</string>
     <string>gateway</string>
     <string>start</string>
     <string>--port</string>
@@ -34,13 +44,13 @@ function generatePlist(port: number): string {
 </plist>`;
 }
 
-function generateSystemdUnit(port: number): string {
+function generateSystemdUnit(port: number, binPath: string): string {
   return `[Unit]
 Description=OpenClaw Gateway
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/openclaw gateway start --port ${port}
+ExecStart=${binPath} gateway start --port ${port}
 Restart=always
 RestartSec=5
 
@@ -55,12 +65,14 @@ export async function setupService(ctx: SetupContext): Promise<void> {
   const s = p.spinner();
   s.start("Configuring auto-start...");
 
+  const binPath = await findOpenClawPath();
+
   try {
     if (platform.serviceManager === "launchd") {
       const plistPath = p_.launchdPlist;
       mkdirSync(dirname(plistPath), { recursive: true });
       mkdirSync(p_.logsDir, { recursive: true });
-      writeFileSync(plistPath, generatePlist(ctx.gatewayPort), "utf-8");
+      writeFileSync(plistPath, generatePlist(ctx.gatewayPort, binPath), "utf-8");
 
       await runShell(`launchctl unload "${plistPath}" 2>/dev/null; true`);
       const result = await runShell(`launchctl load "${plistPath}"`);
@@ -77,7 +89,7 @@ export async function setupService(ctx: SetupContext): Promise<void> {
     } else if (platform.serviceManager === "systemd") {
       const unitPath = p_.systemdUnit;
       mkdirSync(dirname(unitPath), { recursive: true });
-      writeFileSync(unitPath, generateSystemdUnit(ctx.gatewayPort), "utf-8");
+      writeFileSync(unitPath, generateSystemdUnit(ctx.gatewayPort, binPath), "utf-8");
 
       await runShell("systemctl --user daemon-reload");
       const result = await runShell(

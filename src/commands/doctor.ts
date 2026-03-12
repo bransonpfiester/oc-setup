@@ -129,7 +129,7 @@ export async function doctorCommand(): Promise<void> {
     checks.push({
       label: "Disk",
       ok: freeGB > 1,
-      detail: `${freeGB.toFixed(0)}GB free ${freeGB > 1 ? "(OK)" : "(LOW)"}`,
+      detail: `${freeGB.toFixed(1)}GB free ${freeGB > 1 ? "(OK)" : "(LOW)"}`,
       fix: freeGB <= 1 ? "Free up disk space" : undefined,
     });
   } catch {
