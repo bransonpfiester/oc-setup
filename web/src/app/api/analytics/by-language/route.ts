@@ -52,6 +52,14 @@ const LANGUAGE_DATA: LanguageStats[] = [
     percentage: 6.3,
     trend: "down",
   },
+  {
+    language: "other",
+    sessions: 480,
+    tokens: 1200000,
+    cost: 36.0,
+    percentage: 4.2,
+    trend: "stable",
+  },
 ];
 
 /**

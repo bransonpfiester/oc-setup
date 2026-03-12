@@ -15,8 +15,6 @@ import {
 import type { Stat, StatListResponse } from "@/types/api";
 import { statsStore } from "@/lib/stores/stats";
 
-export { statsStore };
-
 /**
  * @route GET /api/stats
  * @description List all stats with pagination, filtering, and sorting.

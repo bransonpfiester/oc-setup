@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   errorResponse,
   withErrorHandling,
@@ -22,5 +22,5 @@ export const DELETE = withErrorHandling(async (_req: NextRequest, ctx) => {
   }
 
   webhooksStore.delete(id);
-  return new Response(null, { status: 204 });
+  return new NextResponse(null, { status: 204 });
 });

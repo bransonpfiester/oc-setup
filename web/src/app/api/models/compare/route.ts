@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import type { Model, ComparisonMetric } from "@/types/api";
 import { modelComparison, parseBody } from "@/lib/validation";
 import { success, badRequest, notFound, internal } from "@/lib/api-helpers";
-import { MODEL_REGISTRY } from "../route";
+import { MODEL_REGISTRY } from "@/lib/stores/models";
 
 const DEFAULT_CRITERIA: ComparisonMetric[] = [
   "price",
