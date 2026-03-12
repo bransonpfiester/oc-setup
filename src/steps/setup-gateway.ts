@@ -50,16 +50,6 @@ function writeAuthProfile(ctx: SetupContext): void {
   const providerName = getProviderName(ctx.model.provider);
   const profileId = `${providerName}:default`;
 
-  const authContent = JSON.stringify({
-    profiles: {
-      [profileId]: {
-        type: "api_key",
-        provider: providerName,
-        key: ctx.model.apiKey,
-      },
-    },
-  }, null, 2) + "\n";
-
   const paths = [
     join(homedir(), ".openclaw", "agents", "main", "agent"),
     join(homedir(), ".openclaw", "agent"),
@@ -96,7 +86,7 @@ function writeAuthProfile(ctx: SetupContext): void {
     p.log.success(`API key saved for ${ctx.model.provider}`);
   } else {
     p.log.warn("Could not save API key to auth-profiles.json");
-    p.log.info(`Set it manually: export ${getEnvVar(ctx.model.provider)}="${ctx.model.apiKey}"`);
+    p.log.info(`Set it manually: export ${getEnvVar(ctx.model.provider)}="<your-api-key>"`);
   }
 }
 
