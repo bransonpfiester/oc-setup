@@ -55,7 +55,7 @@ export function Sidebar() {
       >
         {navItems.map((item) => (
           <NavLink
-            key={item.to}
+            key={item.label}
             to={item.to}
             end={item.to === ''}
             style={({ isActive }) => ({

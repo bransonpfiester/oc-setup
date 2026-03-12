@@ -165,7 +165,15 @@ export function Commits() {
               return (
                 <div
                   key={commit.hash}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedCommit(isSelected ? null : commit)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedCommit(isSelected ? null : commit);
+                    }
+                  }}
                   style={{
                     padding: '16px 20px',
                     borderBottom: `1px solid ${colors.border}`,
@@ -393,11 +401,11 @@ export function Commits() {
 
               {showFileTree && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {selectedCommit.files.map((file, i) => {
+                  {selectedCommit.files.map((file) => {
                     const icon = fileStatusIcon(file.status);
                     return (
                       <div
-                        key={i}
+                        key={file.name}
                         style={{
                           display: 'flex',
                           alignItems: 'center',

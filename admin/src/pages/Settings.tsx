@@ -175,7 +175,16 @@ export function Settings() {
     const active = settings[key] as boolean;
     return (
       <div
+        role="switch"
+        tabIndex={0}
+        aria-checked={active}
         onClick={() => update(key, !active)}
+        onKeyDown={(e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            update(key, !active);
+          }
+        }}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

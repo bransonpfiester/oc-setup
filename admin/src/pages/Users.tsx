@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { colors, fonts } from '../theme';
 import { mockUsers, User } from '../data/mockUsers';
@@ -15,6 +15,18 @@ export function Users() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [showExport, setShowExport] = useState(false);
   const [bulkRole, setBulkRole] = useState('');
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showExport) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExport(false);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [showExport]);
 
   const filteredUsers = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -203,7 +215,7 @@ export function Users() {
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Users</h1>
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
+          <div ref={exportRef} style={{ position: 'relative' }}>
             <button
               style={btnStyle}
               onClick={() => setShowExport((v) => !v)}
@@ -308,7 +320,7 @@ export function Users() {
             }}
             onClick={() => setSelectedRows(new Set())}
           >
-            Delete Selected
+            Clear Selection
           </button>
 
           <select
