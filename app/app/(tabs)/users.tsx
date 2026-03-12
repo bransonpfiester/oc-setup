@@ -16,6 +16,10 @@ import { mockUsers } from '../../lib/mock-data';
 type SortField = 'name' | 'sessions' | 'role';
 type SortDir = 'asc' | 'desc';
 
+function ItemSeparator() {
+  return <View style={styles.separator} />;
+}
+
 export default function UsersScreen() {
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('sessions');
@@ -137,7 +141,7 @@ export default function UsersScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={ItemSeparator}
         showsVerticalScrollIndicator={false}
       />
     </View>

@@ -4,9 +4,9 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSize, fonts, radius, chartColors } from '../../lib/theme';
@@ -18,8 +18,7 @@ type TimeRange = '7d' | '30d' | '90d' | '1y';
 export default function AnalyticsScreen() {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [refreshing, setRefreshing] = useState(false);
-  const screenWidth = Dimensions.get('window').width;
-  const chartWidth = screenWidth - spacing.lg * 4;
+  const { width: screenWidth } = useWindowDimensions();
 
   const onRefresh = async () => {
     setRefreshing(true);

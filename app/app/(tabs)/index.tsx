@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   RefreshControl,
-  Dimensions,
   Platform,
+  TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSize, fonts, radius } from '../../lib/theme';
@@ -19,8 +20,8 @@ const ACCENT_CYCLE = [colors.accent, colors.cyan, colors.green, colors.purple, c
 
 export default function OverviewScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const [agentStatus, setAgentStatus] = useState<'healthy' | 'degraded' | 'down'>('healthy');
-  const screenWidth = Dimensions.get('window').width;
+  const agentStatus = 'healthy' as const;
+  const { width: screenWidth } = useWindowDimensions();
   const isWide = screenWidth >= 768;
 
   const onRefresh = async () => {
@@ -149,12 +150,12 @@ export default function OverviewScreen() {
 
 function QuickAction({ icon, label, color }: { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }) {
   return (
-    <View style={[styles.quickAction, { borderColor: color + '30' }]}>
+    <TouchableOpacity activeOpacity={0.7} style={[styles.quickAction, { borderColor: color + '30' }]}>
       <View style={[styles.quickActionIcon, { backgroundColor: color + '18' }]}>
         <Ionicons name={icon} size={20} color={color} />
       </View>
       <Text style={styles.quickActionLabel}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     width: 180,
   },
   statGridItem: {
-    width: '31%' as any,
+    width: '31%',
     minWidth: 160,
   },
   perfRow: {

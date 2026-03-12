@@ -21,11 +21,7 @@ export default function TabLayout() {
           backgroundColor: colors.bgCard,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
-          ...Platform.select({
-            web: { borderBottomWidth: 1, borderBottomColor: colors.border },
-            default: {},
-          }),
-        } as any,
+        },
         headerTintColor: colors.text,
         headerTitleStyle: {
           fontFamily: fonts.sans,

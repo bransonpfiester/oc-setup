@@ -20,8 +20,7 @@ export function ListRow({ title, subtitle, right, icon, iconColor, onPress, show
   return (
     <Container
       style={[styles.row, style]}
-      onPress={onPress}
-      activeOpacity={0.7}
+      {...(onPress ? { onPress, activeOpacity: 0.7 } : {})}
     >
       {icon && (
         <View style={[styles.iconContainer, { backgroundColor: (iconColor || colors.accent) + '18' }]}>

@@ -18,6 +18,10 @@ import type { Session } from '../../lib/types';
 
 type FilterStatus = 'all' | 'active' | 'completed' | 'failed';
 
+function ItemSeparator() {
+  return <View style={styles.separator} />;
+}
+
 export default function SessionsScreen() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
@@ -161,7 +165,7 @@ export default function SessionsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={ItemSeparator}
         ListEmptyComponent={
           <EmptyState
             icon="chatbubbles-outline"

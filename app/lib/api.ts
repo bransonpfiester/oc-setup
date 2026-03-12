@@ -72,8 +72,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   const fetchHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
+    ...(body !== undefined && { 'Content-Type': 'application/json' }),
     ...headers,
   };
 
@@ -84,7 +84,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     signal,
   });
 
-  const json = await response.json();
+  let json: any;
+  try {
+    json = await response.json();
+  } catch {
+    throw new ApiClientError(
+      'PARSE_ERROR',
+      `Failed to parse response as JSON (status ${response.status})`,
+      response.status,
+    );
+  }
 
   if (!response.ok || json.success === false) {
     const err = json as ApiError;
