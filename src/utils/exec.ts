@@ -25,11 +25,11 @@ export async function run(
     });
     return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode: 0 };
   } catch (err: unknown) {
-    const e = err as { stdout?: string; stderr?: string; code?: number };
+    const e = err as { stdout?: string; stderr?: string; code?: number | string };
     return {
       stdout: (e.stdout ?? "").trim(),
       stderr: (e.stderr ?? "").trim(),
-      exitCode: e.code ?? 1,
+      exitCode: typeof e.code === "number" ? e.code : 1,
     };
   }
 }
@@ -46,11 +46,11 @@ export async function runShell(
     });
     return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode: 0 };
   } catch (err: unknown) {
-    const e = err as { stdout?: string; stderr?: string; code?: number };
+    const e = err as { stdout?: string; stderr?: string; code?: number | string };
     return {
       stdout: (e.stdout ?? "").trim(),
       stderr: (e.stderr ?? "").trim(),
-      exitCode: e.code ?? 1,
+      exitCode: typeof e.code === "number" ? e.code : 1,
     };
   }
 }
@@ -59,14 +59,16 @@ export async function runInteractive(
   command: string,
   args: string[] = [],
 ): Promise<number> {
-  const fullCmd = [command, ...args].join(" ");
   return new Promise((resolve) => {
-    const child = spawn(fullCmd, [], {
+    const child = spawn(command, args, {
       stdio: "inherit",
-      shell: true,
+      shell: false,
       env: process.env,
     });
     child.on("close", (code) => resolve(code ?? 1));
-    child.on("error", () => resolve(1));
+    child.on("error", (err) => {
+      console.error(`Failed to spawn ${command}: ${err.message}`);
+      resolve(1);
+    });
   });
 }
